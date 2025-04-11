@@ -75,17 +75,21 @@ namespace Welol {
 	{
 	public:
 		VertexAttribute();
-		VertexAttribute(unsigned int index, VertexDataType type, void* data_ptr, unsigned int verticesCount);
+		VertexAttribute(unsigned int index, VertexDataType type, void* data_ptr, unsigned int verticesCount, bool instanced);
 		unsigned int getIndex();
 		VertexDataType getTypeOfData();
 		void* getDataPtr() { return dataPtr; };
 		unsigned int getVertexCount() { return numberOfVertices; };
+		bool getIsInstanced();
 	private:
 		unsigned int bindingIndex;
 		VertexDataType typeOfData;
 		void* dataPtr;
 		unsigned int numberOfVertices;
+		bool isInstanced;
 	};
+
+	typedef std::vector<unsigned int> VertexIndices;
 
 	class RenderOperation
 	{
@@ -93,12 +97,12 @@ namespace Welol {
 
 		typedef std::map<unsigned int, VertexAttribute> RenderOperationAttributes;
 		RenderOperation(PrimitiveType shapeType, unsigned int numVertices,
-			unsigned int offset, unsigned int numberOfInstance, bool instanced);
+			unsigned int offset, unsigned int numberOfInstance, bool instanced, bool ind);
 
 		PrimitiveType getPrimitiveShapeType();
 		unsigned int getVertexCount();
 		unsigned int getOffset();
-		unsigned int getInstances();
+		unsigned int getInstanceCount();
 		bool getIsInstanced();
 		unsigned int& getOperationID();
 		bool isInitialized();
@@ -107,8 +111,14 @@ namespace Welol {
 		void addVertexAttribute(VertexAttribute& attribute);
 		RenderOperationAttributes& getAttributes();
 
+		bool getIsIndexed() { return isIndexed; };
+		void addVertexIndices(std::vector<unsigned int>& ind);
+		VertexIndices& getIndices() { return indices; };
+		void clearIndices() { indices.clear(); };
+
 	private:
 		RenderOperationAttributes attributes;
+		VertexIndices indices;
 		PrimitiveType primitiveShapeType;
 		unsigned int numberOfVertices;
 		unsigned int vBufferOffset;
@@ -116,6 +126,7 @@ namespace Welol {
 		bool isInstanced;
 		bool initialized{ false };
 		unsigned int operationID{ 0 };
+		bool isIndexed;
 	};
 
 

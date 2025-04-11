@@ -4,11 +4,14 @@
 namespace Welol {
 
 	RenderOperation::RenderOperation(PrimitiveType shapeType, unsigned int numVertices,
-		unsigned int offset, unsigned int numberOfInstance, bool instanced)
+		unsigned int offset, unsigned int numberOfInstance, bool instanced, bool ind)
 		: primitiveShapeType(shapeType),
-		numberOfVertices(numVertices),
-		vBufferOffset(offset),
-		isInstanced(instanced)
+		  numberOfVertices(numVertices),
+		  vBufferOffset(offset),
+		  numberOfInstances(numberOfInstance),
+		  
+		  isInstanced(instanced),
+		  isIndexed(ind)
 	{
 
 	}
@@ -29,7 +32,7 @@ namespace Welol {
 		return vBufferOffset;
 	}
 
-	unsigned int RenderOperation::getInstances()
+	unsigned int RenderOperation::getInstanceCount()
 	{
 		return numberOfInstances;
 	}
@@ -66,6 +69,12 @@ namespace Welol {
 		return attributes;
 	}
 
+	void RenderOperation::addVertexIndices(std::vector<unsigned int>& ind)
+	{
+		indices = ind;
+	}
+
+
 
 	// ---------------------------------------- vertex attribute
 
@@ -74,11 +83,12 @@ namespace Welol {
 
 	}
 
-	VertexAttribute::VertexAttribute(unsigned int index, VertexDataType type, void* data_ptr, unsigned int verticesCount)
+	VertexAttribute::VertexAttribute(unsigned int index, VertexDataType type, void* data_ptr, unsigned int verticesCount, bool instanced)
 		: bindingIndex(index),
 		  typeOfData(type),
 		  dataPtr(data_ptr),
-		  numberOfVertices(verticesCount)
+		  numberOfVertices(verticesCount),
+		  isInstanced(instanced)
 	{
 
 	}
@@ -96,7 +106,10 @@ namespace Welol {
 	}
 
 
-
+	bool VertexAttribute::getIsInstanced()
+	{
+		return isInstanced;
+	}
 
 	// ---------------------------------------------------------
 
@@ -112,19 +125,47 @@ namespace Welol {
 
 		activateRenderOperation(renderOperation);
 		PrimitiveType shapeType = renderOperation.getPrimitiveShapeType();
+		GLenum shape;
 		switch (shapeType)
 		{
 		case WL_TRIANGLES:
-			glDrawArrays(GL_TRIANGLES, renderOperation.getOffset(), renderOperation.getVertexCount());
+			shape = GL_TRIANGLES;
 			break;
 		case WL_LINES:
-			glDrawArrays(GL_LINES, renderOperation.getOffset(), renderOperation.getVertexCount());
+			shape = GL_LINES;
 			break;
 		case WL_POINTS:
-			glDrawArrays(GL_POINTS, renderOperation.getOffset(), renderOperation.getVertexCount());
+			shape = GL_POINTS;
 			break;
 		default:
+			std::cout << "Shape primitive has not been found" << std::endl;
 			break;
+		}
+
+		bool isInst = renderOperation.getIsInstanced();
+		bool isInd = renderOperation.getIsIndexed();
+
+		if (isInd)
+		{
+			if (isInst)
+			{
+				glDrawElementsInstanced(shape, renderOperation.getVertexCount(), GL_UNSIGNED_INT, 0, renderOperation.getInstanceCount());
+			}
+			else 
+			{
+				glDrawElements(shape, renderOperation.getVertexCount(), GL_UNSIGNED_INT, 0);
+			}
+		}
+		else 
+		{
+			if (isInst)
+			{
+				glDrawArraysInstanced(shape, renderOperation.getOffset(), renderOperation.getVertexCount(), renderOperation.getInstanceCount());
+			}
+			else
+			{
+				glDrawArrays(shape, renderOperation.getOffset(), renderOperation.getVertexCount());
+			}
 		}
 		deactivateRenderOperation(renderOperation);
 	}
@@ -159,6 +200,11 @@ namespace Welol {
 			return;
 		}
 
+		std::vector<unsigned int> vertexIndices = {
+		0, 1, 3, // first triangle
+		1, 2, 3  // second triangle
+		};
+
 		activateRenderOperation(renderOperation);
 		for (auto& attribute : renderOperation.getAttributes())
 		{
@@ -167,11 +213,33 @@ namespace Welol {
 			glGenBuffers(1, &vbo);
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
 			glBufferData(GL_ARRAY_BUFFER, va.getVertexCount() * getSizeOfDataType(va.getTypeOfData()), va.getDataPtr(), GL_STATIC_DRAW);
-			//glBufferData(GL_ARRAY_BUFFER, getSizeOfDataType(va.getTypeOfData()), vertexPositions.data(), GL_STATIC_DRAW);
+
+
 			glVertexAttribPointer(va.getIndex(), getTypeCount(va.getTypeOfData()), getGlDataType(va.getTypeOfData()), GL_FALSE, 0, nullptr);
+
+			if (va.getIsInstanced())
+			{
+				glVertexAttribDivisor(va.getIndex(), 1);
+			}
+
 			glEnableVertexAttribArray(va.getIndex());
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
+
+		// REVISIT: Confirm if element buffer object can be initialized from here.
+
+		if (renderOperation.getIsIndexed())
+		{
+			std::cout << "number of indices: " << renderOperation.getIndices().size() << std::endl;
+			unsigned int ebo;
+			glGenBuffers(1, &ebo);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * renderOperation.getVertexCount(), vertexIndices.data(), GL_STATIC_DRAW);
+			// REVISIT: Should i clear this from here?
+			//renderOperation.clearIndices();
+		}
+
+		
 		deactivateRenderOperation(renderOperation);
 	}
 }
