@@ -10,7 +10,7 @@ namespace Welol {
         glm::vec3 position;
         glm::mat4 basisMatrix{glm::mat4(1.0f)};
         glm::mat4& getViewMatrix(){ return basisMatrix; };
-        void update();
+        void update(float forwardRate, float cameraRotYaw, float cameraRotPitch);
         void forwardBy(float forwardRate);
     private:
         void yawBy(float angleDelta);

@@ -10,10 +10,13 @@ namespace Welol {
         basisMatrix = computeBasisInitCam(target);
     }
 
-    void Camera::update()
+    void Camera::update(float forwardRate, float cameraRotYaw, float cameraRotPitch)
     {
 
-        basisMatrix = glm::translate(basisMatrix, -glm::vec3(0.0f, 0.0f, 0.05f));
+        //forwardBy(forwardRate);
+        yawBy(cameraRotYaw);
+        //pitchBy(cameraRotPitch);
+        //rollBy(cameraRotYaw);
     }
 
     void Camera::pitchBy(float angleDelta)
@@ -37,9 +40,10 @@ namespace Welol {
 
         // REVISIT: I'm hoping that the third column is the forward
         // and that index 3 is the the third column.
-        glm::vec3 dir = glm::vec3(basisMatrixTranspose[3]);
+        glm::vec3 translation = glm::vec3(basisMatrixTranspose[2]) * forwardRate;
 
-        position.z += 0.8f;
+        position += translation;
+        basisMatrix = glm::translate(basisMatrix, -translation);
     }
 
     glm::mat4 Camera::computeBasisInitCam(const glm::vec3& target) 

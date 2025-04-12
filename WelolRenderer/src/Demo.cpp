@@ -10,11 +10,23 @@
 #include "Camera.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
+void processInput(GLFWwindow* window, bool& rotateCamera);
+void mouse_callback(GLFWwindow* window,double xpos,double ypos);
+
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
+/*
+    mouse input 
+*/
+
+double lastX = 0.0;
+double lastY = 0.0;
+float pitch = 0.0f;
+float yaw = 0.0f;
+bool firstMouse = true;
 
 int main()
 {
@@ -40,6 +52,7 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -79,7 +92,10 @@ int main()
 
     // ---------------------- matrices ------------------------------------
     Welol::Camera camera{glm::vec3(0.0f, 0.0f, 60.0f), glm::vec3(0.0f, 0.0f, 0.0f)};
-    glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH /(float)SCR_HEIGHT, 0.1f, 1000.0f);
+    float nearPlane = 0.1f;
+    float farPlane = 1000.0f;
+    float focusAngle = 45.0f;
+    glm::mat4 projectionMatrix = glm::perspective(glm::radians(focusAngle), (float)SCR_WIDTH /(float)SCR_HEIGHT, nearPlane, farPlane);
 
     // --------------------------------------------------------------------
   
@@ -90,8 +106,8 @@ int main()
 
     // --------------------------------- instanced draw call demo ----------------------------------
 
-    
-    unsigned int numberOfInstances = 10000;
+    unsigned int widthCount = 100;
+    unsigned int numberOfInstances = widthCount * widthCount;
     unsigned int numberOfRectVertices = 6;
     bool instanced = true;
     bool indexed = true;
@@ -103,11 +119,11 @@ int main()
     float seperation = 2.0f;
     float xStart = -50.5f;
     float yStart = -50.25f;
-    for (unsigned int y = 0; y < 100; y++)
+    for (unsigned int y = 0; y < widthCount; y++)
     {
         float ySep = (float)y * seperation;
         float yPos = yStart + ySep;
-        for (unsigned int x = 0; x < 100; x++)
+        for (unsigned int x = 0; x < widthCount; x++)
         {
             float xSep = (float)x * seperation;
             float xPos = xStart + xSep;
@@ -161,11 +177,15 @@ int main()
 
     // render loop
     // -----------
+
+    bool rotateCamera = false;
+    float cameraRotYaw = 0.0f;
+    float cameraRotPitch = 0.0f;
     while (!glfwWindowShouldClose(window))
     {
         // input
         // -----
-        processInput(window);
+        processInput(window, rotateCamera);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -178,11 +198,16 @@ int main()
 
         GLRenderer.render(instancedRectangles);
         
+        
+        if (!rotateCamera)
+        {
+            yaw = 0.0f;
+            pitch = 0.0f;
+        }
 
-        camera.forwardBy(-2.5f);
-        camera.update();
+        camera.update(0.05f, yaw, pitch);
         // --------------------------------------------------------------
-
+            
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -202,10 +227,19 @@ int main()
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window, bool& rotateCamera)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3) == GLFW_PRESS)
+    {
+        rotateCamera = true;
+    }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3) == GLFW_RELEASE)
+    {
+        rotateCamera = false;
+    }
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -216,3 +250,25 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
+
+
+void mouse_callback(GLFWwindow* window,double xpos,double ypos)
+ {
+    if(firstMouse)
+    {
+        lastX=xpos;
+        lastY=ypos;
+        firstMouse=false;
+    }
+
+    yaw = xpos - lastX;
+    pitch = lastY - ypos;
+    lastX = xpos;
+    lastY = ypos;
+    float yawSensitivity = 0.05f;
+    float pitchSensitivity = 0.1f;
+    yaw   *= yawSensitivity;
+    pitch *= pitchSensitivity;
+
+ }
+
