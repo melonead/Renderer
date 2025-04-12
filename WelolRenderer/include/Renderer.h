@@ -142,10 +142,10 @@ namespace Welol {
 		void initializeRenderOperation(RenderOperation& renderOperation);
 
 
-		void activateRenderOperation(RenderOperation& renderOperation);
-		void deactivateRenderOperation(RenderOperation& renderOperation);
+		void _activateRenderOperation(RenderOperation& renderOperation);
+		void _deactivateRenderOperation(RenderOperation& renderOperation);
 
-		void activateRenderOperationAttributes(RenderOperation& renderOperation);
+		void _activateRenderOperationAttributes(RenderOperation& renderOperation);
 	private:
 	};
 

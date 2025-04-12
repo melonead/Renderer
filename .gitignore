@@ -4,5 +4,13 @@
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
+*.filters
 .vs/
-/WelolRenderer/include/ThirdParty/
+/.vs
+.vscode/
+/.vscode
+/WelolRenderer/include/ThirdParty
+/WelolRenderer/build
+/WelolRenderer/x64
+/WelolRenderer/Debug
+/WelolRenderer/CMakeFiles

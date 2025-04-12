@@ -3,6 +3,18 @@
 
 namespace Welol {
 
+	/*
+	*   A render operation could represent a single mesh rendering.
+	* 
+		A render operation is done using:
+			- single draw call
+			- multiple vertex data representing the variaous attributes (e.g position, color)
+			- can be instanced
+				- draw multiple objects using a single draw call
+			- indexed
+				- using indices to save on the number of vertex data (e.g position) that need to be sent to the gpu
+	*/
+
 	RenderOperation::RenderOperation(PrimitiveType shapeType, unsigned int numVertices,
 		unsigned int offset, unsigned int numberOfInstance, bool instanced, bool ind)
 		: primitiveShapeType(shapeType),
@@ -76,7 +88,13 @@ namespace Welol {
 
 
 
-	// ---------------------------------------- vertex attribute
+	/*
+	* A vertex attribute represent an attribute of a vertex data.
+	* For example position attribute, color attribute.
+	* A vertex attribute has:
+	*	- binding index for the gpu/shader program to know where to find it.
+	*
+	*/
 
 	VertexAttribute::VertexAttribute()
 	{
@@ -113,7 +131,10 @@ namespace Welol {
 
 	// ---------------------------------------------------------
 
-
+	/*
+	* The renderer houses all the direct openGL calls.
+	* It uses a render operation to get the data it need to for a draw call.
+	*/
 
 	Renderer::Renderer()
 	{
@@ -123,7 +144,7 @@ namespace Welol {
 	void Renderer::render(RenderOperation& renderOperation)
 	{
 
-		activateRenderOperation(renderOperation);
+		_activateRenderOperation(renderOperation);
 		PrimitiveType shapeType = renderOperation.getPrimitiveShapeType();
 		GLenum shape;
 		switch (shapeType)
@@ -167,7 +188,7 @@ namespace Welol {
 				glDrawArrays(shape, renderOperation.getOffset(), renderOperation.getVertexCount());
 			}
 		}
-		deactivateRenderOperation(renderOperation);
+		_deactivateRenderOperation(renderOperation);
 	}
 
 
@@ -176,20 +197,24 @@ namespace Welol {
 	{
 		glGenVertexArrays(1, &renderOperation.getOperationID());
 		renderOperation.setInitialized(true);
+
+		// 
+		_activateRenderOperation(renderOperation);
+		_activateRenderOperationAttributes(renderOperation);
 	}
 
-	void Renderer::activateRenderOperation(RenderOperation& renderOperation)
+	void Renderer::_activateRenderOperation(RenderOperation& renderOperation)
 	{
 		glBindVertexArray(renderOperation.getOperationID());
 	}
 
-	void Renderer::deactivateRenderOperation(RenderOperation& renderOperation)
+	void Renderer::_deactivateRenderOperation(RenderOperation& renderOperation)
 	{
 		glBindVertexArray(0);
 	}
 
 
-	void Renderer::activateRenderOperationAttributes(RenderOperation& renderOperation)
+	void Renderer::_activateRenderOperationAttributes(RenderOperation& renderOperation)
 	{
 
 
@@ -205,7 +230,7 @@ namespace Welol {
 		1, 2, 3  // second triangle
 		};
 
-		activateRenderOperation(renderOperation);
+		_activateRenderOperation(renderOperation);
 		for (auto& attribute : renderOperation.getAttributes())
 		{
 			VertexAttribute& va = attribute.second;
@@ -230,16 +255,15 @@ namespace Welol {
 
 		if (renderOperation.getIsIndexed())
 		{
-			std::cout << "number of indices: " << renderOperation.getIndices().size() << std::endl;
 			unsigned int ebo;
 			glGenBuffers(1, &ebo);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * renderOperation.getVertexCount(), vertexIndices.data(), GL_STATIC_DRAW);
 			// REVISIT: Should i clear this from here?
-			//renderOperation.clearIndices();
+			renderOperation.clearIndices();
 		}
 
 		
-		deactivateRenderOperation(renderOperation);
+		_deactivateRenderOperation(renderOperation);
 	}
 }

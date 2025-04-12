@@ -7,6 +7,7 @@
 #include "Renderer.h"
 
 #include "shader.h"
+#include "Camera.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -77,77 +78,36 @@ int main()
 
 
     // ---------------------- matrices ------------------------------------
-
-    glm::mat4 viewMatrix = glm::mat4(1.0f);
-    viewMatrix = glm::translate(viewMatrix, glm::vec3(0.0f, 0.0f, -90.0f));
-    glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH /(float)SCR_HEIGHT, 0.1f, 100.0f);
+    Welol::Camera camera{glm::vec3(0.0f, 0.0f, 60.0f), glm::vec3(0.0f, 0.0f, 0.0f)};
+    glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH /(float)SCR_HEIGHT, 0.1f, 1000.0f);
 
     // --------------------------------------------------------------------
-    
-    /*
-
-    // ------------------------- attributes
-    
-    Welol::VertexAttribute positionAttribute{ 0, Welol::WL_FLOAT3, vertexPositions.data(), 6, false};
-    Welol::VertexAttribute colorAttribute{1, Welol::WL_FLOAT3, vertexColors.data(), 1, true};
-    // --------------------------------------------
-
-
-    // ----------------------------- Render Operation ---------------------------------
-
-    Welol::RenderOperation triangleRenderOperation{ Welol::WL_TRIANGLES, numberOfRectVertices, 0, 0, false };
-    triangleRenderOperation.addVertexAttribute(positionAttribute);
-    triangleRenderOperation.addVertexAttribute(colorAttribute);
-    // --------------------------------------------------------------------------------
-
-        // -----------------------------------------------------------------------------------------------------------------------------------------
-    // ----------- initialization ----------------------
-    // initialize render operation
-    GLRenderer.initializeRenderOperation(triangleRenderOperation);
-    // activate render operation
-    GLRenderer.activateRenderOperation(triangleRenderOperation);
-    // activate attributes of the render operation
-    GLRenderer.activateRenderOperationAttributes(triangleRenderOperation);
-    // -----------------------------------------------------------------------------------------------------------------------------------------
-    */
-
-
-
-
+  
 
     // ----------------------------- Renderer -----------------------------------------
     Welol::Renderer GLRenderer;
     // --------------------------------------------------------------------------------
 
-
-
-
-
-
-
     // --------------------------------- instanced draw call demo ----------------------------------
 
-    unsigned int numberOfInstances = 300;
+    
+    unsigned int numberOfInstances = 10000;
     unsigned int numberOfRectVertices = 6;
     bool instanced = true;
     bool indexed = true;
-    Welol::RenderOperation instancedRectangles{ Welol::WL_TRIANGLES, numberOfRectVertices, 0, numberOfInstances, instanced, indexed };
 
-    // add vertex indices
-    instancedRectangles.addVertexIndices(vertexIndices);
-    
     // create displacement attribute for displacement of the rectangles
     std::vector<float> displacements;
     displacements.reserve(numberOfInstances * 2);
 
     float seperation = 2.0f;
-    float xStart = -20.5f;
-    float yStart = -30.25f;
-    for (unsigned int y = 0; y < 30; y++)
+    float xStart = -50.5f;
+    float yStart = -50.25f;
+    for (unsigned int y = 0; y < 100; y++)
     {
         float ySep = (float)y * seperation;
         float yPos = yStart + ySep;
-        for (unsigned int x = 0; x < 10; x++)
+        for (unsigned int x = 0; x < 100; x++)
         {
             float xSep = (float)x * seperation;
             float xPos = xStart + xSep;
@@ -155,6 +115,18 @@ int main()
             displacements.push_back(yPos);
         }
     }
+
+
+
+
+
+
+
+    Welol::RenderOperation instancedRectangles{ Welol::WL_TRIANGLES, numberOfRectVertices, 0, numberOfInstances, instanced, indexed };
+
+    // add vertex indices
+    instancedRectangles.addVertexIndices(vertexIndices);
+    
     // attach vertex position attributes (make it instanced)
     Welol::VertexAttribute position{ 0, Welol::WL_FLOAT3, vertexPositions.data(), 6, false };
     // attach vertex color attributes (make it instanced)
@@ -170,21 +142,7 @@ int main()
     // ----------- initialization ----------------------
     // initialize render operation
     GLRenderer.initializeRenderOperation(instancedRectangles);
-    // activate render operation
-    GLRenderer.activateRenderOperation(instancedRectangles);
-    // activate attributes of the render operation
-    GLRenderer.activateRenderOperationAttributes(instancedRectangles);
-
     // ---------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
 
 
 
@@ -199,8 +157,8 @@ int main()
 
     std::string instanceRectsVertexShaderPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\instancedRectsVertex.glsl";
     std::string instanceRectsFragmentShaderPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\instancedRectsFragment.glsl";
-
     Shader instancedRectsShader{ instanceRectsVertexShaderPath , instanceRectsFragmentShaderPath };
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -208,43 +166,24 @@ int main()
         // input
         // -----
         processInput(window);
-
-        /*
-        // ----------- render loop --------------------------
-        // activate current GPU program
-        triangleShader.use();
-        triangleShader.setMatrix4fv("viewMatrix", viewMatrix);
-        triangleShader.setMatrix4fv("projectionMatrix", projectionMatrix);
-        // activate render operation
-        
-        // openGL draw call
-        //glDrawArrays(GL_TRIANGLES, triangleRenderOperation.getOffset(), triangleRenderOperation.getVertexCount());
-        GLRenderer.render(triangleRenderOperation);
-        // deactivate render operation
-        */
-
-
-
-
-
-
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         // ---------------------------------------------- instanced rects
         
+        glm::mat4 mat = camera.getViewMatrix();
         instancedRectsShader.use();
-        instancedRectsShader.setMatrix4fv("viewMatrix", viewMatrix);
+        instancedRectsShader.setMatrix4fv("viewMatrix", camera.getViewMatrix());
         instancedRectsShader.setMatrix4fv("projectionMatrix", projectionMatrix);
 
         GLRenderer.render(instancedRectangles);
+        
 
+        camera.forwardBy(-2.5f);
+        camera.update();
         // --------------------------------------------------------------
 
 
-
-
-
-
-        
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -255,6 +194,9 @@ int main()
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
+    vertexPositions.clear();
+    vertexColors.clear();
+    vertexIndices.clear();
     return 0;
 }
 
