@@ -8,6 +8,7 @@
 
 #include "shader.h"
 #include "Camera.h"
+#include "SceneView.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window, bool& rotateCamera);
@@ -16,8 +17,8 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
-
+const unsigned int SCR_HEIGHT = 800;
+bool rotFlag = false;
 /*
     mouse input 
 */
@@ -91,12 +92,14 @@ int main()
 
 
     // ---------------------- matrices ------------------------------------
-    Welol::Camera camera{glm::vec3(0.0f, 0.0f, 60.0f), glm::vec3(0.0f, 0.0f, 0.0f)};
+    // Welol::SphericalSystemCamera camera{glm::vec3(0.0f, 0.0f, 60.0f), glm::vec3(0.0f, 0.0f, 0.0f)};
+    //Welol::RectangularSystemCamera camera {glm::vec3(0.0f, 0.0f, 60.0f), glm::vec3(0.0f, 0.0f, 0.0f)};
+    Welol::Camera* camera = new Welol::RectangularSystemCamera(glm::vec3(0.0f, 0.0f, 30.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+
     float nearPlane = 0.1f;
     float farPlane = 1000.0f;
     float focusAngle = 45.0f;
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(focusAngle), (float)SCR_WIDTH /(float)SCR_HEIGHT, nearPlane, farPlane);
-
     // --------------------------------------------------------------------
   
 
@@ -175,6 +178,16 @@ int main()
     std::string instanceRectsFragmentShaderPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\instancedRectsFragment.glsl";
     Shader instancedRectsShader{ instanceRectsVertexShaderPath , instanceRectsFragmentShaderPath };
 
+
+
+
+
+    // -------------------------- scene view
+
+    float axisLength = 50.0f;
+    Welol::SceneView sceneView{axisLength, GLRenderer};
+    // -------------------------------------
+
     // render loop
     // -----------
 
@@ -191,12 +204,14 @@ int main()
 
         // ---------------------------------------------- instanced rects
         
-        glm::mat4 mat = camera.getViewMatrix();
+        glm::mat4 mat = camera->getViewMatrix();
         instancedRectsShader.use();
-        instancedRectsShader.setMatrix4fv("viewMatrix", camera.getViewMatrix());
+        instancedRectsShader.setMatrix4fv("viewMatrix", camera->getViewMatrix());
         instancedRectsShader.setMatrix4fv("projectionMatrix", projectionMatrix);
 
         GLRenderer.render(instancedRectangles);
+
+        sceneView.update(GLRenderer, projectionMatrix, camera->getViewMatrix());
         
         
         if (!rotateCamera)
@@ -205,7 +220,12 @@ int main()
             pitch = 0.0f;
         }
 
-        camera.update(0.05f, yaw, pitch);
+        if (rotateCamera)
+        {
+            camera->update(0.05f, yaw, pitch, lastX, lastY, rotateCamera);
+        } else{
+            camera->setLastMousePos(lastX, lastY);
+        }
         // --------------------------------------------------------------
             
 
@@ -222,6 +242,7 @@ int main()
     vertexPositions.clear();
     vertexColors.clear();
     vertexIndices.clear();
+    delete camera;
     return 0;
 }
 
@@ -263,10 +284,15 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos)
 
     yaw = xpos - lastX;
     pitch = lastY - ypos;
+
+    if (abs(yaw) < 2.5f)
+        yaw = 0.0f;
+    if (abs(pitch) < 2.5f)
+        pitch = 0.0f;
     lastX = xpos;
     lastY = ypos;
-    float yawSensitivity = 0.05f;
-    float pitchSensitivity = 0.1f;
+    float yawSensitivity = 0.005f;
+    float pitchSensitivity = 0.005f;
     yaw   *= yawSensitivity;
     pitch *= pitchSensitivity;
 
