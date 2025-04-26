@@ -109,12 +109,8 @@ int main()
     float focusAngle = 45.0f;
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(focusAngle), (float)SCR_WIDTH /(float)SCR_HEIGHT, nearPlane, farPlane);
     // --------------------------------------------------------------------
-        
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
+  
 
-    glEnable(GL_DEPTH_TEST);
     // ----------------------------- Renderer -----------------------------------------
     Welol::Renderer GLRenderer;
     // --------------------------------------------------------------------------------
@@ -124,60 +120,6 @@ int main()
     stbi_set_flip_vertically_on_load(true);
     // 
     // GPU PROGRAM
-
-    std::string vertexShaderPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\shaders\\rectVertex.glsl";
-    std::string fragmentShaderPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\shaders\\rectFragment.glsl";
-    
-    Shader triangleShader{ vertexShaderPath, fragmentShaderPath };
-
-    std::string instanceRectsVertexShaderPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\shaders\\instancedRectsVertex.glsl";
-    std::string instanceRectsFragmentShaderPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\shaders\\instancedRectsFragment.glsl";
-    Shader instancedRectsShader{ instanceRectsVertexShaderPath , instanceRectsFragmentShaderPath };
-
-    // Camera Shader.
-    std::string cameraVertexShaderPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\shaders\\cameraVertex.glsl";
-    std::string cameraFragmentShaderPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\shaders\\cameraFragment.glsl";
-    Shader cameraShader{ cameraVertexShaderPath , cameraFragmentShaderPath };
-
-    // Camera model path.
-    std::string cameraObjModelPath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\3DModels\\bridge.obj";
-
-    // Model Loader.
-    Model_Loader cameraObjLoader;
-    cameraObjLoader.load_model(cameraObjModelPath);
-
-    std::vector<float> cameraVertexPositions = cameraObjLoader.getPositions();
-
-    std::vector<unsigned int> cameraVertexIndices = cameraObjLoader.get_indices();
-    std::vector<float> cameraTextureCoordinates = cameraObjLoader.getTexCoords();
-    unsigned int cameraVerticesCount = cameraVertexIndices.size();
-
-    Welol::RenderOperation cameraRenderOperation{ Welol::WL_TRIANGLES, cameraVerticesCount, 0, 0, false, true };
-
-    // add vertex indices
-    cameraRenderOperation.addVertexIndices(cameraVertexIndices);
-    
-    // attach vertex position attributes
-    Welol::VertexAttribute cameraPosition{ 0, Welol::WL_FLOAT3, cameraVertexPositions.data(), cameraVerticesCount, false};
-    // attach vertex texture coordinate attributes
-    Welol::VertexAttribute cameraTexCoord{ 1, Welol::WL_FLOAT2, cameraTextureCoordinates.data(), cameraVerticesCount, false};
-
-    // add the attributes to the render operation
-    cameraRenderOperation.addVertexAttribute(cameraPosition);
-    cameraRenderOperation.addVertexAttribute(cameraTexCoord);
-
-    // ----------- initialization ----------------------
-    // initialize render operation
-    GLRenderer.initializeRenderOperation(cameraRenderOperation);
-    // TextureTarget target, TextureInternalFormat internalFormat, std::string& imagePath, unsigned int mipLevel, std::string& tName
-    std::string cameraTexturePath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\resource\\3DModels\\images\\testTexture.png";
-    std::string cameraTextureName = "cameraTexture";
-    unsigned int texUnit = 0;
-    Welol::Texture cameraTexture{Welol::WL_TEX_2D, Welol::WL_RGBA, cameraTexturePath, 0, cameraTextureName, texUnit};
-    std::cout << "after: " << cameraTexture.ID << std::endl;
-    cameraTexture.attachImageData(cameraTexturePath);
-    // --------------------------------------------------------------------------------------------
-
 
     // -------------------------- scene view
 
@@ -200,12 +142,7 @@ int main()
         // -----
         processInput(window, rotateCamera);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glFrontFace(GL_CCW);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glBlendEquation(GL_FUNC_ADD);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         // ---------------------------------------------- instanced rects
 
@@ -215,13 +152,7 @@ int main()
         // WelolMath::Mat4x4 wlView = camera->wLGetViewMatrix();
         // sceneView.wlUpdate(GLRenderer, projectionMatrix, wlView);
 
-        
-        cameraShader.use();
-        cameraShader.setMatrix4fv("view", view);
-        cameraShader.setMatrix4fv("projection", projectionMatrix);
-        cameraTexture.update(cameraShader);
-        GLRenderer.render(cameraRenderOperation);
-        
+        std::cout << "SkyBox is the one running" << std::endl;
 
         if (!rotateCamera)
         {

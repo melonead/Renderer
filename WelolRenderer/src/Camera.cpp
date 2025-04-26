@@ -1,81 +1,97 @@
 #include "Camera.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "WelolMath.h"
 
 namespace Welol {
-
-    bool equal(const glm::vec3& lhs, const glm::vec3& rhs, float epsilon)  {
-        return fabs(lhs.x - rhs.x) < epsilon && fabs(lhs.y - rhs.y) < epsilon && fabs(lhs.z - rhs.z) < epsilon;
-    }
     
     Camera::Camera(glm::vec3 pos, glm::vec3 target)
-        : position(pos)
+        : position(pos),
+          focusTarget(target)
     {
-        viewMatrix = lookAt(target);
+        // wLposition = WelolMath::Vec3(pos.x, pos.y, pos.z);
+        // WelolMath::Vec3 p{pos.x, pos.y, pos.z};
+        // WelolMath::Vec3 t{target.x, target.y, target.z};
+        // lookAt(p, t);
+
+        viewMatrix = glm::lookAt(pos, focusTarget, glm::vec3(0.0f, 1.0f, 0.0f));
     }
 
 
 
-    glm::mat4 Camera::lookAt(const glm::vec3& target) 
+    void Camera::lookAt(WelolMath::Vec3& eye, WelolMath::Vec3& target) 
     {
 
-        glm::mat4 basis = glm::mat4(1.0f);
-        // Forward direction is from the target to the camera 
-        // because the camera is actually static and the scene
-        // is the one that has moved.
-        glm::vec3 forwardBasis = glm::normalize(position - target);
-        glm::vec3 leftBasis = glm::cross(forwardBasis, glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::vec3 upBasis = glm::cross(forwardBasis, leftBasis);
-        
-        
-        // These represent the rotation matrix, they are later to be inverted
-        // to compensate for the fact that it is the scene that rotates and not
-        // the camera.
-        basis[0] = glm::vec4(leftBasis, 0.0f);
-        basis[1] = glm::vec4(upBasis, 0.0f);
-        basis[2] = glm::vec4(forwardBasis, 0.0f);
-        basis[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-        
-        // Invert the rotation matrix since it is the scene that is 
-        // to rotate an not the camera actually. Inverting an orthonormal
-        // square matrix can be done by transposing it
-        basis = glm::transpose(basis); 
-        
-        // Translation bit of the construction
-        glm::mat4 translation = glm::mat4(1.0f);
-        translation[0].w = -position.x;
-        translation[1].w = -position.y;
-        translation[2].w = -position.z;
-        
+        WelolMath::Mat4x4 rotation(1.0f);
+        WelolMath::Mat4x4 translation(1.0f);
+        WelolMath::Vec3 temporaryUp{0.0f, 1.0f, 0.0f};
 
-        // This line is equivalent to the translation done above.
-        // GLM will put the translation vector on the bottom most row, but we want it
-        // at the right most column, thus the transposition.
-        /*  glm::version                 desired version
-            |1  0  0  0|                 |1  0  0  tx |                                
-            |0  1  0  0|                 |0  1  0  ty |                   
-            |0  0  1  0|                 |0  0  0  tz |                   
-            |tx ty tz 1|                 |0  0  0  1  |
-                                           
-        */
-        /*
-        glm::mat4 translation = glm::transpose(glm::translate(glm::mat4(1.0f), -position));
-        */
+        WelolMath::Vec3 forwardBasis = WelolMath::normalize(eye - target);
+        
+        float eps = 0.00001f;
+
+        if(fabs(forwardBasis.x) < eps && fabs(forwardBasis.z) < eps)
+        {
+            // forward vector is pointing +Y axis
+            if(forwardBasis.y > 0)
+            {   
+                std::cout << "facing up" << std::endl;
+                temporaryUp = WelolMath::Vec3(0.0f, 0.0f, -1.0f);
+            }
+            // forward vector is pointing -Y axis
+            else
+            {
+                std::cout << "facing down" << std::endl;
+                temporaryUp = WelolMath::Vec3(0.0f, 0.0f, 1.0f);
+            }
+        }
+        // in general, up vector is straight up
+        else
+        {
+            temporaryUp = WelolMath::Vec3(0.0f, 1.0f, 0.0f);
+        }
 
 
-        translation = glm::transpose(translation);
 
-        basis = basis * translation;
+        // Order of the dot product parameters matter, reverse order will give a flipped scene
+        WelolMath::Vec3 leftBasis = WelolMath::cross(temporaryUp, forwardBasis);
+        WelolMath::Vec3 upBasis = WelolMath::cross(forwardBasis, leftBasis);
 
-       
-        return basis;
+        
+        // rotation[0] = glm::vec4(leftBasis.x, leftBasis.y, leftBasis.z, 0.0f);
+        // rotation[1] = glm::vec4(upBasis.x, upBasis.y, upBasis.z, 0.0f);
+        // rotation[2] = glm::vec4(forwardBasis.x, forwardBasis.y, forwardBasis.z, 0.0f);
+
+        rotation[0][0] = leftBasis.x; 
+        rotation[1][0] = leftBasis.y; 
+        rotation[2][0] = leftBasis.z; 
+        rotation[3][0] = -WelolMath::dot(leftBasis, eye); 
+
+        rotation[0][1] = upBasis.x; 
+        rotation[1][1] = upBasis.y; 
+        rotation[2][1] = upBasis.z; 
+        rotation[3][1] = -WelolMath::dot(upBasis, eye); 
+
+        rotation[0][2] =  forwardBasis.x;
+        rotation[1][2] =  forwardBasis.y;
+        rotation[2][2] =  forwardBasis.z;
+        rotation[3][2] = -WelolMath::dot(forwardBasis, eye);
+
+        if (set == false)
+        {
+            set = true;
+            leftAxis = leftBasis;
+        }
+
+    
+        wLViewMatrix = rotation;    
     }
     
-    void Camera::moveForward(float forwardRate)
+    void Camera::moveForward(float direction)
     {
         // We negate because the local forward basis for the camera will be
         // facing the opposite direction the view space forward basis is facing.
-        glm::vec3 translation = glm::vec3(-glm::transpose(viewMatrix)[2]) * forwardRate;
+        glm::vec3 translation = glm::vec3(-glm::transpose(viewMatrix)[2]) * scrollRate * direction;
 
         position += translation;
         viewMatrix = glm::translate(viewMatrix, -translation);
@@ -132,20 +148,14 @@ namespace Welol {
 
     }
 
-    RectangularSystemCamera::RectangularSystemCamera(glm::vec3 pos, glm::vec3 target)
-        : Camera(pos, target)
-    {   
-        
-    }
 
-
-    void RectangularSystemCamera::update(
+    void Camera::update(
         float forwardRate, 
         float cameraRotYaw, 
         float cameraRotPitch,
         float mouseX,
         float mouseY,
-        bool rotFlag
+        bool forwardCamera
     )
     {
 
@@ -155,79 +165,105 @@ namespace Welol {
         yawBy(cameraRotYaw * 10.0f);
         pitchBy(cameraRotPitch * 10.0f);
         */
+
+        if (forwardCamera)
+            moveForward(0.05f);
         static float PI = 3.141592653589793;
-
-        glm::vec3 rotationAxis(0.0f, 1.0f, 0.0f);
+        
         glm::vec3 pivot(0.0f, 0.0f, 0.0f);
+        glm::mat4 arcRotationMatrix = glm::mat4(1.0f);
+        glm::vec3 rotationAxis(0.0f, 1.0f, 0.0f);
 
-        float delatAngle = PI / 800.0f;
+        float deltaAngle = PI / 800.0f;
         
-        float deltaAngleX = (mouseX - lastMousePos.x) * delatAngle;
-        float deltaAngleY = (mouseY - lastMousePos.y) * delatAngle;
-        
-        // For vertical axis rotation rotate around world vertical axis
-        arcRotationMatrix = glm::mat4(1.0f);
-        rotationAxis = glm::vec3(0.0f, 0.0f, 1.0f);
-        arcRotationMatrix = glm::rotate(arcRotationMatrix, deltaAngleX, rotationAxis);
+        float deltaAngleX = (mouseX - lastMousePos.x) * deltaAngle;
+        float deltaAngleY = (mouseY - lastMousePos.y) * deltaAngle;
 
-        // For the horizontal axis rotation rotate around the camera's left axis
-        rotationAxis = glm::vec3(-glm::transpose(viewMatrix)[0]);
-        arcRotationMatrix = glm::rotate(arcRotationMatrix, -deltaAngleY, rotationAxis);
+
+
+        glm::mat4x4 rotMat(1.0f);
+        glm::vec3 rotAxis = -glm::transpose(viewMatrix)[0];
+        rotMat = glm::rotate(rotMat, deltaAngleY, rotAxis);
+
+        rotAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+        rotMat = glm::rotate(rotMat, -deltaAngleX, rotAxis);
+        position = glm::vec3(rotMat * glm::vec4((position - focusTarget), 1.0f)) + focusTarget;
+
+
+        glm::vec3 cameraForward = glm::vec3(glm::transpose(viewMatrix)[2]);
+        glm::vec3 cameraUp = glm::vec3(glm::transpose(viewMatrix)[1]);
+        glm::vec3 tempUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+        /*float eps = 0.1f;
+
+        if(fabs(cameraForward.x) < eps && fabs(cameraForward.z) < eps)
+        {
+            if (cameraUp.y > 0.0f)
+            {
+                std::cout << "facing down" << std::endl;
+                tempUp = glm::vec3(0.0f, 0.0f, 1.0f);
+            }
+            else
+            { 
+                std::cout << "facing up" << std::endl;
+                tempUp = glm::vec3(0.0f, 0.0f, -1.0f);
+            }
+        } 
+        else
+        {
+            tempUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+        */
+        viewMatrix = glm::lookAt(position, focusTarget, tempUp);
+
+
+        /*
+        std::cout << "radius: " << WelolMath::vectorLength(wLposition - wLFocusTarget) << std::endl;
+
+
+        WelolMath::Vec3 rotAxis = WelolMath::Vec3(0.0f, 1.0f, 0.0f);//WelolMath::transpose(wLViewMatrix).getColumn3(0);
+        WelolMath::Vec3 toRotate = wLposition - wLFocusTarget;
+        WelolMath::Vec3 rotated = WelolMath::rotateAroundAxis(toRotate, rotAxis, -deltaAngleX);
+        wLposition = rotated + wLFocusTarget;
+
+        std::cout << " lx: " << leftAxis.x << " ly: " << leftAxis.y << " lz: " << leftAxis.z << std::endl;
+
+        rotAxis = WelolMath::transpose(wLViewMatrix).getColumn3(0);
+        toRotate = wLposition - wLFocusTarget;
+        rotated = WelolMath::rotateAroundAxis(toRotate, rotAxis, deltaAngleY);
+
+        wLposition = rotated + wLFocusTarget;
+
+        rotAxis = WelolMath::Vec3(0.0f, 1.0f, 0.0f);
+
+
+        lookAt(wLposition, wLFocusTarget);
+        */
         
-        viewMatrix *= arcRotationMatrix;
+        //std::cout << " x: " << position.x << " y: " << position.y << " z: " << position.z << std::endl;
+        //std::cout << deltaAngleX << std::endl;
         
         lastMousePos.x = mouseX;
         lastMousePos.y = mouseY;
+
+        
  
 
     }
 
-    void RectangularSystemCamera::pitchBy(float angleDelta)
+    void Camera::pitchBy(float angleDelta)
     {
         viewMatrix = glm::rotate(viewMatrix, glm::radians(angleDelta), glm::vec3(1.0f, 0.0f, 0.0f));
     }
 
-    void RectangularSystemCamera::yawBy(float angleDelta)
+    void Camera::yawBy(float angleDelta)
     {
         viewMatrix = glm::rotate(viewMatrix, glm::radians(angleDelta), glm::vec3(0.0f, 1.0f, 0.0f));
     }
 
-    void RectangularSystemCamera::rollBy(float angleDelta)
+    void Camera::rollBy(float angleDelta)
     {
         viewMatrix = glm::rotate(viewMatrix, glm::radians(angleDelta), glm::vec3(0.0f, 0.0f, 1.0f));
-    }
-
-
-    SphericalSystemCamera::SphericalSystemCamera(glm::vec3 pos, glm::vec3 target)
-        : Camera(pos, target)    
-    {
-        
-    }
-
-    void SphericalSystemCamera::update(float forwardRate, float cameraRotYaw, float cameraRotPitch, float lastMouseX,
-        float lastMouseY, bool rotFlag)
-    {
-        //basisMatrix = glm::rotate(basisMatrix, glm::radians(0.05f), glm::vec3(0.0f, 1.0f, 0.0f));
-        // basisMatrix = glm::rotate(basisMatrix, glm::radians(0.05f), glm::vec3(1.0f, 0.0f, 0.0f));
-        // rotateAroundWorldAxes(cameraRotYaw, cameraRotPitch);
-        rotateAroundWorldAxes(-cameraRotYaw, -cameraRotPitch);
-        //std::cout << "aldkjfasdl;kfjsdl;fj" << std::endl;
-    }
-
-    void SphericalSystemCamera::rotateAroundWorldAxes(float yaw, float pitch)
-    {
-        // glm::vec3 oldPosition = position;
-        glm::mat4 rot = glm::mat4(1.0f);
-        rot = glm::rotate(rot, glm::radians(-pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-
-        rot = glm::rotate(rot, glm::radians(-yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-        rot = glm::rotate(rot, glm::radians(-pitch), glm::vec3(0.0f, 0.0f, 1.0f));
-        glm::vec4 p = rot * glm::vec4(position, 1.0f);
-        position = glm::vec3(p);
-        //camTarget = glm::vec3(p);
-        viewMatrix = lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
-        // basisMatrix = glm::translate(basisMatrix, -(position));
-        // glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
     }
 
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <iostream>
+#include "WelolMath.h"
 
 namespace Welol {
 
@@ -8,80 +9,49 @@ namespace Welol {
     {
     public:
         Camera(glm::vec3 pos, glm::vec3 target);
-        virtual glm::mat4& getViewMatrix() = 0;
-        virtual void update(
-            float forwardRate, 
+        glm::mat4& getViewMatrix() {return viewMatrix; };
+        WelolMath::Mat4x4& wLGetViewMatrix() {return wLViewMatrix;};
+        void update(
+            float forwardDirection, 
             float cameraRotYaw, 
-            float cameraRotPitch, 
+            float cameraRotPitch,
             float mouseX,
             float mouseY,
             bool rotFlag
-        ) = 0;
+        );
 
         void setLastMousePos(float lastX, float lastY)
         {
             lastMousePos.x = lastX;
             lastMousePos.y = lastY;
         }
-
-    protected:
-        glm::vec3 position;
-        glm::vec3 camTarget = glm::vec3(5.0f,5.0f, 5.f);
+        
+        void moveForward(float forwardRate);
+    private:
+        glm::vec3 position{0.0f, 0.0f, 0.0f};
+        glm::vec3 focusTarget{0.0f, 0.0f, 0.0f};
         glm::mat4 viewMatrix{glm::mat4(1.0f)};
         glm::vec2 lastMousePos{2.0f,5.0f};
 
-        glm::mat4 lookAt(const glm::vec3& target);
-        void moveForward(float forwardRate);
+
+        bool set = false;
+        WelolMath::Mat4x4 wLViewMatrix{1.0f};
+        WelolMath::Vec3 wLposition{0.0f, 0.0f, 0.0f};
+        WelolMath::Vec3 wLFocusTarget{0.0f, 0.0f, 0.0f};
+        WelolMath::Vec3 leftAxis{0.0f, 0.0f, 0.0f};
+        float distanceFromTarget{0.0f};
+
+        float scrollRate{1.5f};
+
+        void lookAt(WelolMath::Vec3& pos, WelolMath::Vec3& target);
         void moveLeft(float rate);
         void moveUp(float rate);
 
+        void pitchBy(float angle);
+        void yawBy(float angle);
+        void rollBy(float angle);
+
         glm::mat4 angleToMatrix(float angle);
-
-        // arc ball stuff
-        float radius {60.0f};
-        glm::mat4x4 arcRotationMatrix{1.0f};
-        glm::vec3 getUnitVector(float x, float y);
-        glm::vec3 getVector(float x, float y);
-        glm::vec3 getVectorWithProject(float x, float y);
-        float angleBetween(glm::vec3& vecA, glm::vec3& vecB);
-    };
-    
-    class SphericalSystemCamera : public Camera
-    {
-    public:
-        SphericalSystemCamera(glm::vec3 pos, glm::vec3 target); 
-        glm::mat4& getViewMatrix() {return viewMatrix; };   
-        void update(
-            float forwardRate, 
-            float cameraRotYaw, 
-            float cameraRotPitch, 
-            float mouseX,
-            float mouseY,
-            bool rotFlag
-        );
-    private:
-        void rotateAroundWorldAxes(float yaw, float pitch);
-        
-    };
-
-    class RectangularSystemCamera : public Camera
-    {
-    public:
-        RectangularSystemCamera(glm::vec3 pos, glm::vec3 target); 
-        glm::mat4& getViewMatrix(){ return viewMatrix; };   
-        void update(
-            float forwardRate, 
-            float cameraRotYaw, 
-            float cameraRotPitch, 
-            float mouseX,
-            float mouseY,
-            bool rotFlag
-        );
-    private:
-        void yawBy(float angleDelta);
-        void pitchBy(float angleDelta);
-        void rollBy(float angleDelta);
-        
     };
 
 }

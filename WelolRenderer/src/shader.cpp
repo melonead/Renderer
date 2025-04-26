@@ -8,6 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <sstream>
+#include "WelolMath.h"
 
 
 
@@ -130,6 +131,11 @@ void Shader::setFloat(const char* name, float value)
 void Shader::setMatrix4fv(const char* name, glm::mat4 &value)
 {
     glUniformMatrix4fv(glGetUniformLocation(shaderID, name), 1, GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::wlSetMatrix4fv(const char* name, WelolMath::Mat4x4 &value)
+{
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, name), 1, GL_FALSE, value.getDataPtr());
 }
 
 void Shader::setMatrix3fv(const char* name, glm::mat3 &value)

@@ -1,6 +1,7 @@
 #pragma once
 #include "glm/glm.hpp"
 #include <string>
+#include "WelolMath.h"
 
 class Shader {
 public:
@@ -21,6 +22,8 @@ public:
 	void setFloat(const char* name, float value);
 
 	void setMatrix4fv(const char* name, glm::mat4& value);
+
+	void wlSetMatrix4fv(const char* name, WelolMath::Mat4x4 &value);
 
 	void setMatrix3fv(const char* name, glm::mat3& value);
 

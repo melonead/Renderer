@@ -225,10 +225,6 @@ namespace Welol {
 			return;
 		}
 
-		std::vector<unsigned int> vertexIndices = {
-		0, 1, 3, // first triangle
-		1, 2, 3  // second triangle
-		};
 
 		_activateRenderOperation(renderOperation);
 		for (auto& attribute : renderOperation.getAttributes())
@@ -242,6 +238,9 @@ namespace Welol {
 
 			glVertexAttribPointer(va.getIndex(), getTypeCount(va.getTypeOfData()), getGlDataType(va.getTypeOfData()), GL_FALSE, 0, nullptr);
 
+			// REVISIT: Add instance rate to vertex attribute, for now we assume instanced attributes are
+			// going to be repeated at every vertex shader program run on the GPU.
+			// glVertexAttribDivisor(va.getIndex(), instanceRate);
 			if (va.getIsInstanced())
 			{
 				glVertexAttribDivisor(va.getIndex(), 1);
@@ -258,7 +257,7 @@ namespace Welol {
 			unsigned int ebo;
 			glGenBuffers(1, &ebo);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * renderOperation.getVertexCount(), vertexIndices.data(), GL_STATIC_DRAW);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * renderOperation.getVertexCount(), renderOperation.getIndices().data(), GL_STATIC_DRAW);
 			// REVISIT: Should i clear this from here?
 			renderOperation.clearIndices();
 		}
