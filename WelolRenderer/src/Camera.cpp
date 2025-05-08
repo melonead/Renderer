@@ -106,7 +106,6 @@ namespace Welol {
 
         position += translation;
         viewMatrix = glm::translate(viewMatrix, -translation);
-
     }
 
     void Camera::moveUp(float rate)

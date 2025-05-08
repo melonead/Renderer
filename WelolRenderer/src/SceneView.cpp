@@ -3,7 +3,7 @@
 #include "WelolMath.h"
 
 namespace Welol{
-    SceneView::SceneView(float axisL, Welol::Renderer renderer)
+    SceneView::SceneView(float axisL, Welol::Renderer& renderer)
         : axisLength(axisL)
     {
         std::vector<float> axisStartsAndEnds  {

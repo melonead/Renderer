@@ -15,9 +15,7 @@ namespace Welol {
     iFormat(internalFormat),
     textureUnit(tUnit),
     mipLevel(mipLvl)
-    {
-        //glGenTextures(1, &ID);
-        
+    {        
         glGenTextures(1, &ID);
     }
 
@@ -40,24 +38,18 @@ namespace Welol {
         int w, h, ch;
         unsigned char* data = stbi_load(path.c_str(), &w, &h, &ch, 0);
 
-
-
-
         bind();
-        glTexImage2D(GL_TEXTURE_2D, mipLevel, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-        generateMipMapLevels();
-        applyTrilinearMipMapFiltering();
-        clampToEdgeTiling();
-
+        
+        
         
         if(data)
         {
             switch(target)
             {
                 case WL_TEX_1D:
-                    break;
+                break;
                 case WL_TEX_2D:
+                    glTexImage2D(getGLTextureTarget(target), mipLevel, getGLTextureInternalFormat(iFormat), w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);   
                     //glTexSubImage2D(GL_TEXTURE_2D, mipLevel, 0, 0, w, h, GL_RGB, GL_RGBA, data);
                     break;
                 case WL_TEX_3D:
@@ -67,17 +59,21 @@ namespace Welol {
                 case WL_TEX_2D_ARR:
                     break;
                 case WL_TEX_CUBE_MAP:
-                    break;
+                break;
                 default:
-                    break;
-    
+                break;
+                
             }
         }
         else
         {
             std::cout << "Image could not be loaded" << std::endl;
         }
-
+        
+        // Mip map generation and default filtering, nothing will be visible if mip maps are not generated
+        generateMipMapLevels();
+        applyTrilinearMipMapFiltering();
+        clampToEdgeTiling();
         
         stbi_image_free(data);
     }
@@ -103,17 +99,27 @@ namespace Welol {
         glGenerateMipmap(getGLTextureTarget(target));
     }
 
-    void Texture::addFaceTextureToCubeMap(
-        CubeMapFaces face,
-        unsigned int mipLevel,
-        TextureInternalFormat internalFormat,
-        unsigned int w,
-        unsigned int h,
-        unsigned char* data
-
-    )
+    void Texture::addFaceTextureToCubeMap(CubeMapFaces face, std::string& path)
     {
-        glTexImage2D(getGLCubeMapFace(face), mipLevel, getGLTextureInternalFormat(internalFormat), w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        bind();
+        int w, h, ch;
+        unsigned char* data = stbi_load(path.c_str(), &w, &h, &ch, 0);
+        
+        if(data)
+        {
+            glTexImage2D(getGLCubeMapFace(face), mipLevel, getGLTextureInternalFormat(iFormat), w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        }
+        else
+        {
+            std::cout << "Image could not be loaded" << std::endl;
+        }
+
+        // REVISIT: Can we do these after the images are generated?, They take quite a bit
+        // of time.
+        generateMipMapLevels();
+        applyTrilinearMipMapFiltering();
+        clampToEdgeTiling();
+        stbi_image_free(data);
     }
 
     void Texture::bind()

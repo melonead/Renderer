@@ -7,7 +7,7 @@ project(Renderer VERSION 1.0)
 # First Demo
 add_executable(
     RendererDemo 
-    src/Demo.cpp 
+    src/Demos/Demo.cpp 
     src/glad.c 
     src/Renderer.cpp 
     src/shader.cpp 
@@ -28,7 +28,7 @@ target_link_libraries(RendererDemo PUBLIC ${GLFW3})
 
 add_executable(
     SkyBoxDemo 
-    src/SkyBox.cpp 
+    src/Demos/SkyBox.cpp 
     src/glad.c 
     src/Renderer.cpp 
     src/shader.cpp 
@@ -45,4 +45,32 @@ target_include_directories(SkyBoxDemo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
 target_include_directories(SkyBoxDemo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/ThirdParty)
 target_link_libraries(SkyBoxDemo PUBLIC ${GLFW3})
 
+
+# Fluid Simulation
+
+add_executable(
+    SphSimulation
+
+    FluidSim/HashTable.cpp
+    FluidSim/Simulation.cpp
+    FluidSim/main.cpp
+    src/glad.c 
+    src/Renderer.cpp 
+    src/shader.cpp 
+    src/Camera.cpp 
+    src/SceneView.cpp  
+    src/string_funcs.cpp 
+    src/WelolMath.cpp
+    src/Text.cpp
+)
+
+target_include_directories(SphSimulation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(SphSimulation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/FluidSim/include)
+target_include_directories(SphSimulation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/ThirdParty)
+target_link_libraries(SphSimulation PUBLIC ${GLFW3})
+target_link_libraries(SphSimulation PUBLIC ${FREETYPE})
+
 find_library(GLFW3 glfw3 REQUIRED PATH lib)
+find_library(FREETYPE freetype REQUIRED PATH lib)
+ 
+

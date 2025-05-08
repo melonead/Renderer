@@ -25,6 +25,8 @@ namespace Welol {
             lastMousePos.x = lastX;
             lastMousePos.y = lastY;
         }
+
+        glm::vec3& getPosition() {return position; };
         
         void moveForward(float forwardRate);
     private:

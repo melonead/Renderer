@@ -16,11 +16,11 @@ namespace Welol {
 	*/
 
 	RenderOperation::RenderOperation(PrimitiveType shapeType, unsigned int numVertices,
-		unsigned int offset, unsigned int numberOfInstance, bool instanced, bool ind)
+		unsigned int offset, unsigned int numberOfInstances, bool instanced, bool ind)
 		: primitiveShapeType(shapeType),
 		  numberOfVertices(numVertices),
 		  vBufferOffset(offset),
-		  numberOfInstances(numberOfInstance),
+		  numberOfInstances(numberOfInstances),
 		  
 		  isInstanced(instanced),
 		  isIndexed(ind)
@@ -158,6 +158,9 @@ namespace Welol {
 		case WL_POINTS:
 			shape = GL_POINTS;
 			break;
+		case WL_LINE_LOOP:
+			shape = GL_LINE_LOOP;
+			break;
 		default:
 			std::cout << "Shape primitive has not been found" << std::endl;
 			break;
@@ -181,6 +184,7 @@ namespace Welol {
 		{
 			if (isInst)
 			{
+				
 				glDrawArraysInstanced(shape, renderOperation.getOffset(), renderOperation.getVertexCount(), renderOperation.getInstanceCount());
 			}
 			else
@@ -230,8 +234,10 @@ namespace Welol {
 		for (auto& attribute : renderOperation.getAttributes())
 		{
 			VertexAttribute& va = attribute.second;
+
 			unsigned int vbo;
 			glGenBuffers(1, &vbo);
+			va.setBufferID(vbo);
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
 			glBufferData(GL_ARRAY_BUFFER, va.getVertexCount() * getSizeOfDataType(va.getTypeOfData()), va.getDataPtr(), GL_STATIC_DRAW);
 
@@ -248,6 +254,9 @@ namespace Welol {
 
 			glEnableVertexAttribArray(va.getIndex());
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			// record size of data 
+			va.setSizeOfData(va.getVertexCount() * getSizeOfDataType(va.getTypeOfData()));
 		}
 
 		// REVISIT: Confirm if element buffer object can be initialized from here.
@@ -264,5 +273,12 @@ namespace Welol {
 
 		
 		_deactivateRenderOperation(renderOperation);
+	}
+
+	void Renderer::updateRenderOperationVertexAttribute(RenderOperation& renderOperation, unsigned int index, unsigned int offset, void* data)
+	{
+		VertexAttribute& va = renderOperation.getAttribute(index);
+		glBindBuffer(GL_ARRAY_BUFFER, va.getBufferID());
+		glBufferSubData(GL_ARRAY_BUFFER, offset, va.getSizeOfData(), data);
 	}
 }

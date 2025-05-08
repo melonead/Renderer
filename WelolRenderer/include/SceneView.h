@@ -13,7 +13,7 @@ namespace Welol {
     class SceneView
     {
     public:
-        SceneView(float axisL, Welol::Renderer renderer);
+        SceneView(float axisL, Welol::Renderer& renderer);
         void update(Renderer& renderer, glm::mat4& projection, glm::mat4& view);
         void wlUpdate(Renderer& renderer, glm::mat4& projection, WelolMath::Mat4x4& view);
     private:

@@ -5,6 +5,7 @@
 
 class Shader {
 public:
+	Shader() = default;
 	Shader(const std::string& v_path, const std::string& f_path);
 	Shader(
 		const std::string& v_path, 
