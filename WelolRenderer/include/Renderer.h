@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #include <vector>
 #include <map>
+#include <iostream>
 
 namespace Welol {
 
@@ -12,7 +13,8 @@ namespace Welol {
 		WL_TRIANGLES = 0,
 		WL_POINTS = 1,
 		WL_LINES = 2,
-		WL_LINE_LOOP = 3
+		WL_LINE_LOOP = 3,
+		WL_TRIANGLE_STRIP = 4
 	};
 
 	enum VertexDataType : unsigned int
@@ -93,7 +95,6 @@ namespace Welol {
 		void* getDataPtr() { return dataPtr; };
 		unsigned int getVertexCount() { return numberOfVertices; };
 		bool getIsInstanced();
-		void setSizeOfData(unsigned int size) {sizeOfDataInBytes = size; };
 		unsigned int getSizeOfData() {return sizeOfDataInBytes; }
 		unsigned int& getBufferID() {return bufferID;}
 		void setBufferID(unsigned int id) { bufferID = id;}
@@ -139,6 +140,17 @@ namespace Welol {
 		void clearIndices() { indices.clear(); };
 		void updateVertexAttributeData(unsigned int index);
 
+		void reduceInstancesToRender(unsigned int count)
+		{
+			numberOfInstances -= count;
+
+		}
+
+		void setNumberOfInstancesToRender(unsigned int count)
+		{
+			numberOfInstances = count;
+		}
+
 	private:
 		RenderOperationAttributes attributes;
 		VertexIndices indices;
@@ -170,8 +182,15 @@ namespace Welol {
 		void setRenderOperation(RenderOperation& renderOperation);
 		void initializeRenderOperation(RenderOperation& renderOperation);
 
-		// Update vertex attribute's data when it changes in memory.
+		/*
+			Change existing data in the buffer. No additional data added.
+		*/
 		void updateRenderOperationVertexAttribute(RenderOperation& renderOperation, unsigned int index, unsigned int offset, void* data);
+
+		/*
+			Add data to an over allocated buffer.
+		*/
+		void addSizeBytesToBuffer(RenderOperation& renderOperation, unsigned int index, unsigned int offset, unsigned int size, void* data);
 
 
 		void _activateRenderOperation(RenderOperation& renderOperation);

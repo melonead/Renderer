@@ -49,7 +49,7 @@ namespace Welol {
                 case WL_TEX_1D:
                 break;
                 case WL_TEX_2D:
-                    glTexImage2D(getGLTextureTarget(target), mipLevel, getGLTextureInternalFormat(iFormat), w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);   
+                    glTexImage2D(getGLTextureTarget(target), mipLevel, getGLTextureInternalFormat(iFormat), w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);   
                     //glTexSubImage2D(GL_TEXTURE_2D, mipLevel, 0, 0, w, h, GL_RGB, GL_RGBA, data);
                     break;
                 case WL_TEX_3D:

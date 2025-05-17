@@ -98,6 +98,7 @@ namespace Welol {
     class Texture
     {
     public:
+        Texture() = default;
         Texture(TextureTarget tgt, TextureInternalFormat internalFormat, std::string& imagePath, unsigned int mipLvl, std::string& tName, unsigned int tUnit);
         ~Texture();
         void update(Shader& shader);

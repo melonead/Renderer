@@ -14,6 +14,10 @@ public:
 		const std::string& f_path
 	);
 
+	Shader(const std::string& c_path);
+
+	~Shader();
+
 	void use();
 	
 	void setBool(const char* name, bool value);
@@ -53,5 +57,8 @@ private:
 		const std::string& tes_path, 
 		const std::string& f_path
 	);
+
+	// This is for compute shaders
+	void load_shaders(const std::string& c_path);
 };
 

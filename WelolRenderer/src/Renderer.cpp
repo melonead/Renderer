@@ -25,7 +25,6 @@ namespace Welol {
 		  isInstanced(instanced),
 		  isIndexed(ind)
 	{
-
 	}
 
 
@@ -103,12 +102,12 @@ namespace Welol {
 
 	VertexAttribute::VertexAttribute(unsigned int index, VertexDataType type, void* data_ptr, unsigned int verticesCount, bool instanced)
 		: bindingIndex(index),
-		  typeOfData(type),
-		  dataPtr(data_ptr),
-		  numberOfVertices(verticesCount),
-		  isInstanced(instanced)
+		typeOfData(type),
+		dataPtr(data_ptr),
+		numberOfVertices(verticesCount),
+		isInstanced(instanced),
+		sizeOfDataInBytes(getSizeOfDataType(type) * verticesCount)
 	{
-
 	}
 
 
@@ -160,6 +159,9 @@ namespace Welol {
 			break;
 		case WL_LINE_LOOP:
 			shape = GL_LINE_LOOP;
+			break;
+		case WL_TRIANGLE_STRIP:
+			shape = GL_TRIANGLE_STRIP;
 			break;
 		default:
 			std::cout << "Shape primitive has not been found" << std::endl;
@@ -239,7 +241,7 @@ namespace Welol {
 			glGenBuffers(1, &vbo);
 			va.setBufferID(vbo);
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
-			glBufferData(GL_ARRAY_BUFFER, va.getVertexCount() * getSizeOfDataType(va.getTypeOfData()), va.getDataPtr(), GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, va.getSizeOfData(), va.getDataPtr(), GL_STATIC_DRAW);
 
 
 			glVertexAttribPointer(va.getIndex(), getTypeCount(va.getTypeOfData()), getGlDataType(va.getTypeOfData()), GL_FALSE, 0, nullptr);
@@ -255,8 +257,6 @@ namespace Welol {
 			glEnableVertexAttribArray(va.getIndex());
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-			// record size of data 
-			va.setSizeOfData(va.getVertexCount() * getSizeOfDataType(va.getTypeOfData()));
 		}
 
 		// REVISIT: Confirm if element buffer object can be initialized from here.
@@ -280,5 +280,13 @@ namespace Welol {
 		VertexAttribute& va = renderOperation.getAttribute(index);
 		glBindBuffer(GL_ARRAY_BUFFER, va.getBufferID());
 		glBufferSubData(GL_ARRAY_BUFFER, offset, va.getSizeOfData(), data);
+	}
+
+	void Renderer::addSizeBytesToBuffer(RenderOperation& renderOperation, unsigned int index, unsigned int offset, unsigned int size, void* data)
+	{
+		VertexAttribute& va = renderOperation.getAttribute(index);
+		assert(size <= va.getSizeOfData() && "The number of bytes to be written is larger than the size of the buffer.");
+		glBindBuffer(GL_ARRAY_BUFFER, va.getBufferID());
+		glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
 	}
 }

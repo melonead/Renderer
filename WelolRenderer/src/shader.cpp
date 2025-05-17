@@ -32,6 +32,16 @@ Shader::Shader(
     load_shaders(v_path, tcs_path, tes_path, f_path);
 }
 
+Shader::Shader(const std::string& c_path)
+{
+    load_shaders(c_path);
+}
+
+Shader::~Shader()
+{
+    glDeleteProgram(shaderID);
+}
+
 std::string Shader::read_shader_code(const std::string& path) {
     std::ifstream file_stream{path, std::ios_base::in};
     std::string out_put;
@@ -108,6 +118,17 @@ void Shader::load_shaders(
     compile_shader(tes_path, GL_TESS_EVALUATION_SHADER, infoLog, "tessellation evaluation");
     compile_shader(f_path, GL_FRAGMENT_SHADER, infoLog, "fragment");
     
+    link_shaders(infoLog);
+}
+
+void Shader::load_shaders(const std::string& c_path)
+{
+    shaderID = glCreateProgram();
+
+    char infoLog[512];
+
+    compile_shader(c_path, GL_COMPUTE_SHADER, infoLog, "compute");
+
     link_shaders(infoLog);
 }
 
