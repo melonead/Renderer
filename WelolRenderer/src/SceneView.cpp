@@ -29,6 +29,7 @@ namespace Welol{
         Welol::VertexAttribute position{ 0, Welol::WL_FLOAT3, axisStartsAndEnds.data(), numberOfVertices, false };
         Welol::VertexAttribute color{ 1, Welol::WL_FLOAT3, axisColors.data(), numberOfVertices, false };
         axisRenderOperation.addVertexAttribute(position);
+        axisRenderOperation.setVerticesToRender(6);
         axisRenderOperation.addVertexAttribute(color);
         renderer.initializeRenderOperation(axisRenderOperation);
 
@@ -45,6 +46,7 @@ namespace Welol{
 
         Welol::VertexAttribute linePosition{0, Welol::WL_FLOAT3, linePositions1.data(), 2, false};
         Welol::VertexAttribute linePosition2{ 1, Welol::WL_FLOAT3, linePositions2.data(), 2, false };
+        groundLinesRenderOperation.setVerticesToRender(4);
         groundLinesRenderOperation.addVertexAttribute(linePosition);
         groundLinesRenderOperation.addVertexAttribute(linePosition2);
         renderer.initializeRenderOperation(groundLinesRenderOperation);
@@ -72,6 +74,12 @@ namespace Welol{
     void SceneView::update(Renderer& renderer, glm::mat4& projection, glm::mat4& view)
     {
         
+        shader.use();
+        shader.setMatrix4fv("projectionMatrix", projection);
+        shader.setMatrix4fv("viewMatrix", view);
+        shader.setMatrix4fv("model", axesModelMatrix);
+        renderer.render(axisRenderOperation);
+        
         linesShader.use();
         linesShader.setMatrix4fv("projectionMatrix", projection);
         linesShader.setMatrix4fv("viewMatrix", view);
@@ -81,11 +89,6 @@ namespace Welol{
         renderer.render(groundLinesRenderOperation);
 
         
-        shader.use();
-        shader.setMatrix4fv("projectionMatrix", projection);
-        shader.setMatrix4fv("viewMatrix", view);
-        shader.setMatrix4fv("model", axesModelMatrix);
-        renderer.render(axisRenderOperation);
     }
 
     void SceneView::wlUpdate(Renderer& renderer, glm::mat4& projection, WelolMath::Mat4x4& view)

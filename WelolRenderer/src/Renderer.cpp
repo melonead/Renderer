@@ -243,7 +243,6 @@ namespace Welol {
 			va.setBufferID(vbo);
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
 			// REVISIT: Test for when bad things happen here
-			std::cout << "index: " << va.getIndex() << " size of data: " << va.getSizeOfData() << std::endl;
 			float sizeInBytes = getSizeOfDataType(va.getTypeOfData()) * va.getVertexCount();
 			glBufferData(GL_ARRAY_BUFFER, sizeInBytes, va.getDataPtr(), GL_STATIC_DRAW);
 
@@ -284,7 +283,8 @@ namespace Welol {
 	{
 		VertexAttribute& va = renderOperation.getAttribute(index);
 		glBindBuffer(GL_ARRAY_BUFFER, va.getBufferID());
-		glBufferSubData(GL_ARRAY_BUFFER, offset, va.getSizeOfData(), data);
+		float sizeInBytes = getSizeOfDataType(va.getTypeOfData()) * va.getVertexCount();
+		glBufferSubData(GL_ARRAY_BUFFER, offset, sizeInBytes, data);
 	}
 
 	void Renderer::addSizeBytesToBuffer(RenderOperation& renderOperation, unsigned int index, unsigned int offset, unsigned int size, void* data)
