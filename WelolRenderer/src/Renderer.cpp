@@ -166,32 +166,33 @@ namespace Welol {
 		default:
 			std::cout << "Shape primitive has not been found" << std::endl;
 			break;
-		}
+		}	
 
 		bool isInst = renderOperation.getIsInstanced();
 		bool isInd = renderOperation.getIsIndexed();
-
+		// 16647
+		// std::cout << "render operation vertices: " << renderOperation.getVerticesToRender() << std::endl;
 		if (isInd)
 		{
 			if (isInst)
 			{
-				glDrawElementsInstanced(shape, renderOperation.getVertexCount(), GL_UNSIGNED_INT, 0, renderOperation.getInstanceCount());
+				glDrawElementsInstanced(shape, renderOperation.getVerticesToRender(), GL_UNSIGNED_INT, 0, renderOperation.getInstanceCount());
 			}
 			else 
-			{
-				glDrawElements(shape, renderOperation.getVertexCount(), GL_UNSIGNED_INT, 0);
+			{	
+				glDrawElements(shape, renderOperation.getVerticesToRender(), GL_UNSIGNED_INT, 0);
 			}
 		}
-		else 
+		else 	
 		{
 			if (isInst)
 			{
 				
-				glDrawArraysInstanced(shape, renderOperation.getOffset(), renderOperation.getVertexCount(), renderOperation.getInstanceCount());
+				glDrawArraysInstanced(shape, renderOperation.getOffset(), renderOperation.getVerticesToRender(), renderOperation.getInstanceCount());
 			}
 			else
 			{
-				glDrawArrays(shape, renderOperation.getOffset(), renderOperation.getVertexCount());
+				glDrawArrays(shape, renderOperation.getOffset(), renderOperation.getVerticesToRender());
 			}
 		}
 		_deactivateRenderOperation(renderOperation);
@@ -241,9 +242,12 @@ namespace Welol {
 			glGenBuffers(1, &vbo);
 			va.setBufferID(vbo);
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
-			glBufferData(GL_ARRAY_BUFFER, va.getSizeOfData(), va.getDataPtr(), GL_STATIC_DRAW);
+			// REVISIT: Test for when bad things happen here
+			std::cout << "index: " << va.getIndex() << " size of data: " << va.getSizeOfData() << std::endl;
+			float sizeInBytes = getSizeOfDataType(va.getTypeOfData()) * va.getVertexCount();
+			glBufferData(GL_ARRAY_BUFFER, sizeInBytes, va.getDataPtr(), GL_STATIC_DRAW);
 
-
+		
 			glVertexAttribPointer(va.getIndex(), getTypeCount(va.getTypeOfData()), getGlDataType(va.getTypeOfData()), GL_FALSE, 0, nullptr);
 
 			// REVISIT: Add instance rate to vertex attribute, for now we assume instanced attributes are
@@ -266,7 +270,8 @@ namespace Welol {
 			unsigned int ebo;
 			glGenBuffers(1, &ebo);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * renderOperation.getVertexCount(), renderOperation.getIndices().data(), GL_STATIC_DRAW);
+			unsigned int size = sizeof(unsigned int) * renderOperation.getIndices().size();
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, renderOperation.getIndices().data(), GL_STATIC_DRAW);
 			// REVISIT: Should i clear this from here?
 			renderOperation.clearIndices();
 		}

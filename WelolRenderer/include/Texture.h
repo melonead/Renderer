@@ -99,7 +99,7 @@ namespace Welol {
     {
     public:
         Texture() = default;
-        Texture(TextureTarget tgt, TextureInternalFormat internalFormat, std::string& imagePath, unsigned int mipLvl, std::string& tName, unsigned int tUnit);
+        Texture(TextureTarget tgt, std::string& imagePath, unsigned int mipLvl, std::string& tName, unsigned int tUnit);
         ~Texture();
         void update(Shader& shader);
         void attachImageData(std::string& path);
@@ -112,7 +112,6 @@ namespace Welol {
         // on hardware.
         std::string name;
         TextureTarget target;
-        TextureInternalFormat iFormat;
         unsigned int textureUnit;
         unsigned int mipLevel;
 

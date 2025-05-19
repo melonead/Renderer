@@ -9,10 +9,9 @@
 #include "stb_image.h"
 
 namespace Welol {
-    Texture::Texture(TextureTarget tgt, TextureInternalFormat internalFormat, std::string& imagePath, unsigned int mipLvl, std::string& tName, unsigned int tUnit)
+    Texture::Texture(TextureTarget tgt, std::string& imagePath, unsigned int mipLvl, std::string& tName, unsigned int tUnit)
     :   name{tName},
     target(tgt),
-    iFormat(internalFormat),
     textureUnit(tUnit),
     mipLevel(mipLvl)
     {        
@@ -37,11 +36,7 @@ namespace Welol {
 
         int w, h, ch;
         unsigned char* data = stbi_load(path.c_str(), &w, &h, &ch, 0);
-
         bind();
-        
-        
-        
         if(data)
         {
             switch(target)
@@ -49,8 +44,13 @@ namespace Welol {
                 case WL_TEX_1D:
                 break;
                 case WL_TEX_2D:
-                    glTexImage2D(getGLTextureTarget(target), mipLevel, getGLTextureInternalFormat(iFormat), w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);   
-                    //glTexSubImage2D(GL_TEXTURE_2D, mipLevel, 0, 0, w, h, GL_RGB, GL_RGBA, data);
+                    if (ch == 3)
+                    {
+                        glTexImage2D(getGLTextureTarget(target), mipLevel, GL_RGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);   
+                    } else if (ch == 4)
+                    {
+                        glTexImage2D(getGLTextureTarget(target), mipLevel,  GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);   
+                    }
                     break;
                 case WL_TEX_3D:
                     break;
@@ -107,7 +107,13 @@ namespace Welol {
         
         if(data)
         {
-            glTexImage2D(getGLCubeMapFace(face), mipLevel, getGLTextureInternalFormat(iFormat), w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            if (ch == 3)
+            {
+                glTexImage2D(getGLCubeMapFace(face), mipLevel, GL_RGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);   
+            } else if (ch == 4)
+            {
+                glTexImage2D(getGLCubeMapFace(face), mipLevel,  GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);   
+            }
         }
         else
         {

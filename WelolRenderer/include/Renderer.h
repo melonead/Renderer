@@ -151,6 +151,16 @@ namespace Welol {
 			numberOfInstances = count;
 		}
 
+		void setVerticesToRender(unsigned int count)
+		{
+			verticesToRender = count;
+		}
+
+		unsigned int getVerticesToRender()
+		{
+			return verticesToRender;
+		}
+
 	private:
 		RenderOperationAttributes attributes;
 		VertexIndices indices;
@@ -162,6 +172,7 @@ namespace Welol {
 		bool initialized{ false };
 		unsigned int operationID{ 0 };
 		bool isIndexed;
+		unsigned int verticesToRender;
 	};
 
 	/*
