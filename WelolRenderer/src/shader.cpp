@@ -9,8 +9,32 @@
 #include <fstream>
 #include <sstream>
 #include "WelolMath.h"
+#include <vector>
 
+void processIncludeDirective(std::string& shaderName, std::vector<std::string>& writeTo)
+{
+    std::string absolutePath = "C:/Users/brian/programming_projects/WelolRenderer/WelolRenderer/src/Demos/Lighting/shaders";
+    absolutePath += '/';
+    absolutePath.append(shaderName);
+    //absolutePath += shaderName;
 
+    std::ifstream file_stream{absolutePath, std::ios_base::in};
+    std::string out_put = "";
+    std::stringstream source_stream;
+
+    source_stream << file_stream.rdbuf();
+    out_put = source_stream.str();
+
+    writeTo[writeTo.size() - 1] = out_put;
+    writeTo[writeTo.size() - 1] += '\n';
+
+    // paste the stread at #include shaderName location
+    // save the current position on write file 
+    // save the string from the read file
+    // write string to the write file at the saved position
+
+    file_stream.close();
+}
 
 // URGENT: make better error message incase a file is not found
 
@@ -43,13 +67,83 @@ Shader::~Shader()
 }
 
 std::string Shader::read_shader_code(const std::string& path) {
-    std::ifstream file_stream{path, std::ios_base::in};
-    std::string out_put;
+    std::ifstream file_stream{path};
+
+    if (file_stream.fail())
+    {
+        std::cerr << "Failed to open the file: " << path << std::endl;
+    }
+
+    std::vector<std::string> source;
+    std::string out_put = "";
     std::stringstream source_stream;
 
-    source_stream << file_stream.rdbuf();
-    out_put = source_stream.str();
+    std::string line = "";
+    std::string crit = "";
+    int critLength = 8;
+    bool printLine = false;
+    while(!file_stream.eof())
+    {
+        std::getline(file_stream, line);
+        // Find the include directive
+        source.push_back(line + '\n');
+        std::size_t first = line.find_first_of('#');
+        if (first == line.npos)
+        {
+            continue;
+        }
+        
+        auto it = line.begin();
+        for (; it != line.end(); it++)
+        {
+            if (*it == ' ')
+            {
+                continue;
+            }
+            if (crit.length() < critLength)
+            {
+                crit += *it;
+            }
+        }
+        // If #include has been found proceed to paste contents of the 
+        // included file.
+        if (crit == "#include")
+        {
+            std::size_t start = line.find_first_of('"');
+            std::size_t end = line.find_last_of('"');
+
+            if (start == line.npos || end == line.npos)
+            {
+                std::cerr << "Incorrect include syntax" << std::endl;
+            }
+
+            std::string path = line.substr(start + 1, end - start - 1);
+            
+            // replace the #include directive at this location with some strings
+            // std::string l = "some random stuff";
+            // source[source.size() - 1] = l;
+            // source[source.size() - 1] += '\n';
+            std::cout << "path: " << path << std::endl;
+            processIncludeDirective(path, source);
+            int d = 3;
+        }
+
+        crit = "";
+        line = "";
+    }
     
+    // source_stream << file_stream.rdbuf();
+    // out_put = source_stream.str();
+
+    for(auto line: source)
+    {
+        out_put += line;
+    }
+
+    std::cout << out_put << std::endl;
+    
+
+
     file_stream.close();
     return out_put;
 }
