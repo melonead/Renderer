@@ -11,29 +11,10 @@
 #include "WelolMath.h"
 #include <vector>
 
-void processIncludeDirective(std::string& shaderName, std::vector<std::string>& writeTo)
+
+void preprocessForIncludes(std::vector<std::string>& source)
 {
-    std::string absolutePath = "C:/Users/brian/programming_projects/WelolRenderer/WelolRenderer/src/Demos/Lighting/shaders";
-    absolutePath += '/';
-    absolutePath.append(shaderName);
-    //absolutePath += shaderName;
 
-    std::ifstream file_stream{absolutePath, std::ios_base::in};
-    std::string out_put = "";
-    std::stringstream source_stream;
-
-    source_stream << file_stream.rdbuf();
-    out_put = source_stream.str();
-
-    writeTo[writeTo.size() - 1] = out_put;
-    writeTo[writeTo.size() - 1] += '\n';
-
-    // paste the stread at #include shaderName location
-    // save the current position on write file 
-    // save the string from the read file
-    // write string to the write file at the saved position
-
-    file_stream.close();
 }
 
 // URGENT: make better error message incase a file is not found
@@ -66,74 +47,106 @@ Shader::~Shader()
     glDeleteProgram(shaderID);
 }
 
-std::string Shader::read_shader_code(const std::string& path) {
+std::string getFullPath(std::string& fileName)
+{
+    std::string absolutePath = "C:/Users/brian/programming_projects/WelolRenderer/WelolRenderer/src/Demos/Lighting/shaders";
+    absolutePath += '/';
+    absolutePath.append(fileName);
+    return absolutePath;
+}
+
+void mergeSource(std::vector<std::string>& parent, std::vector<std::string>& child, int mergePosition)
+{
+    // int cursor = 0;
+    // for (auto& str: child)
+    // {
+    //     auto beg = parent.begin();
+    //     parent.insert(beg + 4, child[cursor]);
+    //     mergePosition++;
+    //     cursor++;
+    // }
+
+    for (int i = 0; i < child.size(); i++)
+    {
+        parent.insert(parent.end(), child[i]);
+    }
+}
+
+bool checkIfIncludeDirective(std::string& line)
+{
+    std::string crit = "";
+    int critLength = 8;
+
+    auto it = line.begin();
+    for (; it != line.end(); it++)
+    {
+        if (*it == ' ')
+        {
+            continue;
+        }
+        if (crit.length() < critLength)
+        {
+            crit += *it;
+        }
+    }
+
+    if (crit == "#include")
+    {
+        return true;
+    }
+    return false;
+}
+
+std::string retreveIncludePath(std::string& includeDirective)
+{
+    std::size_t start = includeDirective.find_first_of('"');
+    std::size_t end = includeDirective.find_last_of('"');
+
+    std::string path = includeDirective.substr(start + 1, end - start - 1);
+    return path;
+}
+
+std::vector<std::string> readShaderFromFile(const std::string& path)
+{
     std::ifstream file_stream{path};
 
     if (file_stream.fail())
     {
         std::cerr << "Failed to open the file: " << path << std::endl;
     }
-
-    std::vector<std::string> source;
-    std::string out_put = "";
-    std::stringstream source_stream;
-
+    std::vector<std::string> parent;
     std::string line = "";
-    std::string crit = "";
-    int critLength = 8;
-    bool printLine = false;
+    int position = 0; 
+    std::vector<std::string> child;
     while(!file_stream.eof())
     {
         std::getline(file_stream, line);
-        // Find the include directive
-        source.push_back(line + '\n');
-        std::size_t first = line.find_first_of('#');
-        if (first == line.npos)
+        // check if there is an include here.
+        if (checkIfIncludeDirective(line))
         {
-            continue;
+            std::string fileName = retreveIncludePath(line);
+            std::string fullPath = getFullPath(fileName);
+            child = readShaderFromFile(fullPath);
+            mergeSource(parent, child, position);
         }
-        
-        auto it = line.begin();
-        for (; it != line.end(); it++)
+        else
         {
-            if (*it == ' ')
-            {
-                continue;
-            }
-            if (crit.length() < critLength)
-            {
-                crit += *it;
-            }
+            parent.push_back(line + '\n');
+            position++;
         }
-        // If #include has been found proceed to paste contents of the 
-        // included file.
-        if (crit == "#include")
-        {
-            std::size_t start = line.find_first_of('"');
-            std::size_t end = line.find_last_of('"');
-
-            if (start == line.npos || end == line.npos)
-            {
-                std::cerr << "Incorrect include syntax" << std::endl;
-            }
-
-            std::string path = line.substr(start + 1, end - start - 1);
-            
-            // replace the #include directive at this location with some strings
-            // std::string l = "some random stuff";
-            // source[source.size() - 1] = l;
-            // source[source.size() - 1] += '\n';
-            std::cout << "path: " << path << std::endl;
-            processIncludeDirective(path, source);
-            int d = 3;
-        }
-
-        crit = "";
-        line = "";
+        // --------------------------------
     }
-    
-    // source_stream << file_stream.rdbuf();
-    // out_put = source_stream.str();
+
+    file_stream.close();
+    return parent;
+}
+
+
+
+std::string Shader::read_shader_code(const std::string& path) {
+
+    std::vector<std::string> source = readShaderFromFile(path);
+    std::string out_put = "";
 
     for(auto line: source)
     {
@@ -141,10 +154,7 @@ std::string Shader::read_shader_code(const std::string& path) {
     }
 
     std::cout << out_put << std::endl;
-    
 
-
-    file_stream.close();
     return out_put;
 }
 
