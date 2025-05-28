@@ -104,6 +104,7 @@ namespace Welol {
         void update(Shader& shader);
         void attachImageData(std::string& path);
         void addFaceTextureToCubeMap(CubeMapFaces face, std::string& path);
+        unsigned int getTextureID() {return ID;}
     public:
         unsigned int ID;
 

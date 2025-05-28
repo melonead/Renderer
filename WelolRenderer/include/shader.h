@@ -5,6 +5,7 @@
 
 class Shader {
 public:
+
 	Shader() = default;
 	Shader(const std::string& v_path, const std::string& f_path);
 	Shader(
@@ -35,6 +36,8 @@ public:
 	void setVec3f(const char* name, glm::vec3& value);
 
 	void setVec4f(const char* name, glm::vec4& value);
+
+	unsigned int getShaderID() {return shaderID;}
 
 private:
 	unsigned int shaderID;

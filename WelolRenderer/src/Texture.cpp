@@ -28,7 +28,6 @@ namespace Welol {
         shader.use();
         bind();
         shader.setInt(name.c_str(), textureUnit);
-
     }
 
     void Texture::attachImageData(std::string& path)
@@ -133,6 +132,7 @@ namespace Welol {
         glActiveTexture(GL_TEXTURE0 + textureUnit);
         glBindTexture(getGLTextureTarget(target), ID);
     }
+
 
 
     void Texture::clampToEdgeTiling()

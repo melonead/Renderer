@@ -12,13 +12,6 @@
 #include <vector>
 
 
-void preprocessForIncludes(std::vector<std::string>& source)
-{
-
-}
-
-// URGENT: make better error message incase a file is not found
-
 void Shader::use() {
     glUseProgram(shaderID);
 }
@@ -57,15 +50,6 @@ std::string getFullPath(std::string& fileName)
 
 void mergeSource(std::vector<std::string>& parent, std::vector<std::string>& child, int mergePosition)
 {
-    // int cursor = 0;
-    // for (auto& str: child)
-    // {
-    //     auto beg = parent.begin();
-    //     parent.insert(beg + 4, child[cursor]);
-    //     mergePosition++;
-    //     cursor++;
-    // }
-
     for (int i = 0; i < child.size(); i++)
     {
         parent.insert(parent.end(), child[i]);
@@ -126,6 +110,12 @@ std::vector<std::string> readShaderFromFile(const std::string& path)
         {
             std::string fileName = retreveIncludePath(line);
             std::string fullPath = getFullPath(fileName);
+            if (fullPath == path)
+            {
+                std::cerr << "Ignoring attempt to include " << fileName <<   " inside itself" << std::endl;
+                std::cout << fullPath << std::endl;
+                continue;
+            }
             child = readShaderFromFile(fullPath);
             mergeSource(parent, child, position);
         }
@@ -152,9 +142,7 @@ std::string Shader::read_shader_code(const std::string& path) {
     {
         out_put += line;
     }
-
-    std::cout << out_put << std::endl;
-
+    
     return out_put;
 }
 
