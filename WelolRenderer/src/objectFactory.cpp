@@ -1,6 +1,7 @@
 #include "objectFactory.h"
 #include <fstream>
 #include "Camera.h"
+#include <filesystem>
 
 ObjectFactory::ObjectFactory(std::string& bluePrintPath)
     : bpPath(bluePrintPath)
@@ -31,6 +32,8 @@ ObjectRenderInfo ObjectFactory::createRenderObject(std::string& objectName, Welo
     result.rop.addVertexAttribute(texCoord);
     renderer.initializeRenderOperation(result.rop);
 
+
+    createShaderFilesTemplate(objectName, bp);
     result.shader = new Shader{bp.shaderPath + '\\' + objectName + "Vertex.glsl", bp.shaderPath + '\\' + objectName + "Fragment.glsl"};
 
 
@@ -42,7 +45,46 @@ ObjectRenderInfo ObjectFactory::createRenderObject(std::string& objectName, Welo
     return result;
 }
 
+void ObjectFactory::createShaderFilesTemplate(std::string& objectName, ObjectBluePrint& bp)
+{
+    std::string vPath = bp.shaderPath + '\\' + objectName + "Vertex.glsl";
+    std::string fPath = bp.shaderPath + '\\' + objectName + "Fragment.glsl";
 
+    if (!std::filesystem::exists(vPath))
+    {
+        std::ofstream vFile(vPath);
+        if (vFile.fail())
+            std::cerr << "Failed to open file: " << vPath << std::endl;
+        vFile << "#version 430 core\n";
+        vFile << "layout (location=0) in vec3 position;\n";
+        vFile << "layout (location=1) in vec2 texCoord;\n";
+        vFile << "uniform mat4 view;\n";
+        vFile << "uniform mat4 projection;\n";
+        vFile << "uniform mat4 model;\n";
+        vFile << "out vec2 fragTexCoord;\n";
+        vFile << "void main()\n";
+        vFile << "{\n";
+        vFile << "  gl_Position = projection * view * model * vec4(position, 1.0);\n";
+        vFile << "  fragTexCoord = texCoord;\n";
+        vFile << "}\n";
+    }
+
+    if (!std::filesystem::exists(fPath))
+    {
+        std::ofstream fFile(fPath);
+        if (fFile.fail())
+            std::cerr << "Failed to open file: " << vPath << std::endl;
+        
+        fFile << "#version 430 core\n";
+        fFile << "out vec4 color;\n";
+        fFile << "in vec2 fragTexCoord;\n";
+        fFile << "uniform sampler2D diffuse;\n";
+        fFile << "void main()\n";
+        fFile << "{\n";
+        fFile << "  color = texture(diffuse, fragTexCoord);\n";
+        fFile << "}\n";
+    }
+}
 
 ObjectBluePrint ObjectFactory::parseBluePrintFile(std::string& objectName)
 {

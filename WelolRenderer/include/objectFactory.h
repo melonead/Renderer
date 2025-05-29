@@ -35,4 +35,5 @@ public:
 private:
     std::string bpPath;
     ObjectBluePrint parseBluePrintFile(std::string& objectName);
+    void createShaderFilesTemplate(std::string& objectName, ObjectBluePrint& bp);
 };

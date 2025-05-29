@@ -174,6 +174,9 @@ int main()
 	std::string name = "cyborg";
     ObjectRenderInfo cyborgRenderInfo = factory.createRenderObject(name, renderer, 0); 
 
+    std::string planetName = "planet";
+    ObjectRenderInfo planetRenderInfo = factory.createRenderObject(planetName, renderer, 0); 
+
     Entity cyborg{glm::vec3(
         0.0f,
         0.0f,
@@ -181,8 +184,11 @@ int main()
     )};
     Entity rock{glm::vec3(5.0f, 0.0f, 0.0f)};
 
+    Entity planet{glm::vec3(0.0f, 5.0f, 0.0f)};
+
     cyborg.renderInfo = &cyborgRenderInfo;
     rock.renderInfo = &rockRenderInfo;
+    planet.renderInfo = &planetRenderInfo;
    
     float nearPlane = 0.1f;
     float farPlane = 100.0f;
@@ -232,6 +238,7 @@ int main()
 
         cyborg.update(camera, projectionMatrix, renderer);
         rock.update(camera, projectionMatrix, renderer);
+        planet.update(camera, projectionMatrix, renderer);
 
         mouseRay = computeMouseRay(mouseInfo.positionX, mouseInfo.positionY, SCR_WIDTH, SCR_HEIGHT, camera.getViewMatrix(), projectionMatrix);
         bool intersection = mousePicker.testRayIntersection(mouseRay, cyborg);
