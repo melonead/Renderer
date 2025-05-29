@@ -24,6 +24,7 @@
 #include "Texture.h"
 #include "objectFactory.h"
 #include "Entity.h"
+#include "MousePicker.h"
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -173,7 +174,11 @@ int main()
 	std::string name = "cyborg";
     ObjectRenderInfo cyborgRenderInfo = factory.createRenderObject(name, renderer, 0); 
 
-    Entity cyborg{glm::vec3(-5.0f, 0.0f, 0.0f)};
+    Entity cyborg{glm::vec3(
+        0.0f,
+        0.0f,
+        0.0f
+    )};
     Entity rock{glm::vec3(5.0f, 0.0f, 0.0f)};
 
     cyborg.renderInfo = &cyborgRenderInfo;
@@ -186,6 +191,10 @@ int main()
 
     Welol::SceneView sceneView{80.0f, renderer};
 
+    // mouse picker
+
+    MousePicker mousePicker;
+    Ray mouseRay;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -223,6 +232,14 @@ int main()
 
         cyborg.update(camera, projectionMatrix, renderer);
         rock.update(camera, projectionMatrix, renderer);
+
+        mouseRay = computeMouseRay(mouseInfo.positionX, mouseInfo.positionY, SCR_WIDTH, SCR_HEIGHT, camera.getViewMatrix(), projectionMatrix);
+        bool intersection = mousePicker.testRayIntersection(mouseRay, cyborg);
+
+        if (intersection)
+        {
+            std::cout << "intersection" << std::endl;
+        }
         
         /*
         // Start the Dear ImGui frame

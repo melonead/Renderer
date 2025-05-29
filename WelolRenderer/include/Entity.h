@@ -1,3 +1,4 @@
+#pragma once
 #include "objectFactory.h"
 
 class Entity
@@ -7,6 +8,7 @@ public:
     ~Entity();
     void update(Welol::Camera& camera, glm::mat4& projectionMatrix, Welol::Renderer& renderer);
     ObjectRenderInfo* renderInfo;
+    glm::mat4& getLocalMatrix() {return localMatrix;}
 private:
     glm::mat4 localMatrix{1.0f};
 };

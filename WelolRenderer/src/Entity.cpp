@@ -14,5 +14,5 @@ void Entity::update(Welol::Camera& camera, glm::mat4& projectionMatrix, Welol::R
 
 Entity::~Entity()
 {
-    delete renderInfo;
+    
 }
