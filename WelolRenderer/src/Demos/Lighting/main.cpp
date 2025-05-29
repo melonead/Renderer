@@ -23,6 +23,7 @@
 #include "SceneView.h"
 #include "Texture.h"
 #include "objectFactory.h"
+#include "Entity.h"
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -172,6 +173,11 @@ int main()
 	std::string name = "cyborg";
     ObjectRenderInfo cyborgRenderInfo = factory.createRenderObject(name, renderer, 0); 
 
+    Entity cyborg{glm::vec3(-5.0f, 0.0f, 0.0f)};
+    Entity rock{glm::vec3(5.0f, 0.0f, 0.0f)};
+
+    cyborg.renderInfo = &cyborgRenderInfo;
+    rock.renderInfo = &rockRenderInfo;
    
     float nearPlane = 0.1f;
     float farPlane = 100.0f;
@@ -213,22 +219,10 @@ int main()
 
         // Render Models
         sceneView.update(renderer, projectionMatrix, camera.getViewMatrix());
-        
-        // cyborgRenderInfo.shader->use();
-        // cyborgRenderInfo.shader->setMatrix4fv("view", camera.getViewMatrix());
-        // cyborgRenderInfo.shader->setMatrix4fv("projection", projectionMatrix);
-        // cyborgRenderInfo.diffuse->update(*cyborgRenderInfo.shader);
-        // renderer.render(cyborgRenderInfo.rop);
+    
 
-
-        // rockRenderInfo.shader->use();
-        // rockRenderInfo.shader->setMatrix4fv("view", camera.getViewMatrix());
-        // rockRenderInfo.shader->setMatrix4fv("projection", projectionMatrix);
-        // rockRenderInfo.diffuse->update(*rockRenderInfo.shader);
-        // renderer.render(rockRenderInfo.rop);
-
-        cyborgRenderInfo.update(renderer, camera, projectionMatrix);
-        rockRenderInfo.update(renderer, camera, projectionMatrix);
+        cyborg.update(camera, projectionMatrix, renderer);
+        rock.update(camera, projectionMatrix, renderer);
         
         /*
         // Start the Dear ImGui frame
@@ -268,11 +262,6 @@ int main()
     // ------------------------------------------------------------------
     glfwDestroyWindow(window);
     glfwTerminate();
-
-    delete cyborgRenderInfo.shader;
-    delete rockRenderInfo.shader;
-    delete cyborgRenderInfo.diffuse;
-    delete rockRenderInfo.diffuse;
     
     return 0;
 }

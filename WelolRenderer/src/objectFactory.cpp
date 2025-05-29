@@ -136,11 +136,26 @@ ObjectBluePrint ObjectFactory::parseBluePrintFile(std::string& objectName)
     return result;
 }
 
-void ObjectRenderInfo::update(Welol::Renderer& renderer, Welol::Camera& camera, glm::mat4& projectionMatrix)
+void ObjectRenderInfo::update(Welol::Renderer& renderer, Welol::Camera& camera, glm::mat4& projectionMatrix, glm::mat4& localMatrix)
 {
     shader->use();
     shader->setMatrix4fv("view", camera.getViewMatrix());
     shader->setMatrix4fv("projection", projectionMatrix);
+    shader->setMatrix4fv("model", localMatrix);
     diffuse->update(*shader);
     renderer.render(rop);
+}
+
+
+//--------------------- object render info --------------------------
+
+ObjectRenderInfo::ObjectRenderInfo()
+{
+    
+}
+
+ObjectRenderInfo::~ObjectRenderInfo()
+{
+    delete shader;
+    delete diffuse;
 }

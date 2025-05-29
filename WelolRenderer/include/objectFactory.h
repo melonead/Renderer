@@ -16,11 +16,14 @@ struct ObjectBluePrint
 
 struct ObjectRenderInfo
 {
+
+    ObjectRenderInfo();
+    ~ObjectRenderInfo();
     Welol::RenderOperation rop;
     Welol::Texture* diffuse;
     Shader* shader;
 
-    void update(Welol::Renderer& renderer, Welol::Camera& camera, glm::mat4& projectionMatrix);
+    void update(Welol::Renderer& renderer, Welol::Camera& camera, glm::mat4& projectionMatrix, glm::mat4& localMatrix);
 };
 
 
