@@ -2,6 +2,8 @@
 #include <fstream>
 #include "Camera.h"
 #include <filesystem>
+#include <map>
+
 
 ObjectFactory::ObjectFactory(std::string& bluePrintPath)
     : bpPath(bluePrintPath)
@@ -9,40 +11,156 @@ ObjectFactory::ObjectFactory(std::string& bluePrintPath)
 
 }
 
-ObjectRenderInfo ObjectFactory::createRenderObject(std::string& objectName, Welol::Renderer& renderer, unsigned int texUnit)
+void ObjectFactory::createRenderObject(std::string&path)
 {
-    Model_Loader mesh_loader;
-    ObjectBluePrint bp = parseBluePrintFile(objectName);
-    ObjectRenderInfo result;
+    factoryScanner.scan(path);
+}
 
-    // load mesh information
-    mesh_loader.load_model(bp.meshPath);
-    std::vector<float> positions = mesh_loader.getPositions();
-    std::vector<float> texCoords = mesh_loader.getTexCoords();
-    std::vector<unsigned int> indices = mesh_loader.get_indices();
-    unsigned int numVertices = mesh_loader.getVerticesCount();
+
+bool Scanner::scan(std::string& path)
+{ 
+    std::cout << "scanning file" << std::endl;
+    std::ifstream file_stream{path};
+    if (file_stream.fail())
+    {
+	    std::cout << "failed to the open file" << std::endl;
+	    return false;
+    }
+
+    std::stringstream sourceStream;
+    sourceStream << file_stream.rdbuf();
+    source = sourceStream.str();
     
-    // create render operation
-    result.rop = Welol::RenderOperation{Welol::WL_TRIANGLES, numVertices, 0, 0, false, true};
-    Welol::VertexAttribute position{0, Welol::WL_FLOAT3, positions.data(), numVertices, false};
-    Welol::VertexAttribute texCoord{1, Welol::WL_FLOAT2, texCoords.data(), numVertices, false};
-    result.rop.addVertexIndices(indices);
-    result.rop.setVerticesToRender(indices.size());
-    result.rop.addVertexAttribute(position);
-    result.rop.addVertexAttribute(texCoord);
-    renderer.initializeRenderOperation(result.rop);
+    while (!isAtEndOfFile())
+    {
+	
+	char c = advance();
+    	switch(c)
+    	{
+	    case '{':
+	    {
+		    addToken(LEFT_BRACE);
+		    break;
+	    }
+	    case '}':
+	    {	
+		    addToken(RIGHT_BRACE);
+		    break;
+	    }
+	    case '=':
+	    {
+		    addToken(EQUAL);
+		    break;
+	    }
+	    case '"':
+	    {
+		    addStringToken();
+		    break;
+	    }
+            case ' ':
+            case '\r':
+            case '\t': break;
+            case '\n': break;
+	    default:
+            {
+		    if (isNumeric(c))
+		    {
+			    addNumberToken();
+		    }
+		    else
+		    {
+			    std::cerr << "Unexpected character has been encountered: "  << c << std::endl;
+		    }
+		    break;
+	    }
+		  
+    	}
+	position += size;
+	size = 0;
+    }
+    
+    return true;
+} 
 
+void Scanner::addToken(TokenType type, std::string& value)
+{
+	Token t{type, value};
+	Tokens.push_back(t);
+	std::cout << value << std::endl;
+}
 
-    createShaderFilesTemplate(objectName, bp);
-    result.shader = new Shader{bp.shaderPath + '\\' + objectName + "Vertex.glsl", bp.shaderPath + '\\' + objectName + "Fragment.glsl"};
+void Scanner::addToken(TokenType type)
+{
+	std::string empty = "";
+	addToken(type, empty);
+}
 
+bool Scanner::isAtEndOfFile()
+{
+	return (position == source.size());
+}
 
-    // create diffuse texture
-    std::string texName = "diffuse";
-    result.diffuse = new Welol::Texture{Welol::WL_TEX_2D, bp.diffuseTexturePath, 0, texName, texUnit};
-    result.diffuse->attachImageData(bp.diffuseTexturePath);
+char Scanner::advance()
+{
+	size++;
+	return source.at(position);
+}
 
-    return result;
+void Scanner::addStringToken()
+{
+	while(lookAhead() != '"' && !isAtEndOfFile())
+	{
+		advance();
+	}
+
+	if (isAtEndOfFile())
+	{
+		std::cerr << "Unterminated string" << std::endl;
+	}
+
+	// advance for the closing "
+	advance();
+	std::string value = source.substr(position, size);
+	addToken(STRING, value);
+}
+
+void Scanner::addNumberToken()
+{
+	// Get the whole number part of the number
+	while(isNumeric(lookAhead()) && !isAtEndOfFile())
+	{
+		advance();
+	}
+	
+	// Get the fractional part
+	if (lookAhead() == '.' && isNumeric(lookOneAhead()))
+	{
+		
+		advance(); // Get past '.'
+		while (isNumeric(lookAhead()) && !isAtEndOfFile())
+		{
+			advance();
+		}	
+	}
+	
+	std::string value = source.substr(position, size);
+	addToken(NUMBER, value);
+}
+
+char Scanner::lookAhead()
+{
+	if (isAtEndOfFile()) return '\0';
+	return source.at(position + size);
+}
+
+char Scanner::lookOneAhead()
+{
+	return source.at(position + size + 1);
+}
+
+bool Scanner::isNumeric(char c)
+{
+	return c >= '0' && c <= '9';
 }
 
 void ObjectFactory::createShaderFilesTemplate(std::string& objectName, ObjectBluePrint& bp)
@@ -86,105 +204,15 @@ void ObjectFactory::createShaderFilesTemplate(std::string& objectName, ObjectBlu
     }
 }
 
-ObjectBluePrint ObjectFactory::parseBluePrintFile(std::string& objectName)
-{
-    std::ifstream bpStream{bpPath};
-    ObjectBluePrint result;
-
-    std::string line;
-    std::string str;
-    bool found = false;
-    while (!bpStream.eof())
-    {
-        std::getline(bpStream, line);
-
-
-        for (auto& ch : line)
-        {
-            if (ch == ' ')
-                continue;
-            str += ch;
-        }
-
-        if (str == "{")
-        {
-            str = "";
-            continue;
-        }
-        // the target object has been found and recorded completely
-        // move out of the loop.
-        // REVISIT: if object is to be composed of other objects, we'll have
-        // to think more carefully about this situation.
-        if (str == "}" && objectName == result.name)
-        {
-            break;
-        }
-        if (str == "}")
-        {
-            str = "";
-            continue;   
-        }
-
-        if (str == "")
-            continue;
-
-
-        std::size_t fieldEnd = str.find_first_of(':');
-
-        if (fieldEnd == str.npos)
-        {
-            std::cerr << "Put ':' at the end of the field name \n";
-            std::cout << str << std::endl;
-        }
-        std::string field = str.substr(0, fieldEnd);
-
-        std::size_t valueEnd = str.find_last_of(',');
-        if (valueEnd == str.npos)
-        {
-            std::cerr << "Put ',' at the end of the field name \n";
-            std::cout << str << std::endl;
-        }
-
-        std::string value = str.substr(fieldEnd + 1, valueEnd - fieldEnd - 1);
-
-
-        if (field == "name" && value == objectName)
-        {
-            found = true;
-        }
-
-        if (found)
-        {
-            if (field == "name")
-            {
-                result.name = value;
-    
-            } else if (field == "shaderPath")
-            {
-                result.shaderPath = value;
-            } else if (field == "diffuseTexturePath")
-            {
-                result.diffuseTexturePath = value;
-            } else if (field == "meshPath")
-            {
-                result.meshPath = value;
-            }
-        }
-        
-
-        str = "";
-    }
-
-    return result;
-}
-
 void ObjectRenderInfo::update(Welol::Renderer& renderer, Welol::Camera& camera, glm::mat4& projectionMatrix, glm::mat4& localMatrix)
 {
     shader->use();
     shader->setMatrix4fv("view", camera.getViewMatrix());
     shader->setMatrix4fv("projection", projectionMatrix);
     shader->setMatrix4fv("model", localMatrix);
-    diffuse->update(*shader);
+    if (!(diffuse == nullptr))
+        diffuse->update(*shader);
+
     renderer.render(rop);
 }
 
