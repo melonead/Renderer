@@ -27,7 +27,6 @@ namespace Welol {
 	{
 	}
 
-
 	PrimitiveType RenderOperation::getPrimitiveShapeType()
 	{
 		return primitiveShapeType;

@@ -13,8 +13,8 @@ namespace Welol {
         // WelolMath::Vec3 p{pos.x, pos.y, pos.z};
         // WelolMath::Vec3 t{target.x, target.y, target.z};
         // lookAt(p, t);
-
-        viewMatrix = glm::lookAt(pos, focusTarget, glm::vec3(0.0f, 1.0f, 0.0f));
+        // position.y = 0.0f;
+        viewMatrix = glm::lookAt(position, focusTarget, glm::vec3(0.0f, 1.0f, 0.0f));
     }
 
 
@@ -149,9 +149,8 @@ namespace Welol {
 
 
     void Camera::update(
-        float forwardRate, 
-        float cameraRotYaw, 
-        float cameraRotPitch,
+        float forwardRate,
+        bool rotateCamera,
         float mouseX,
         float mouseY,
         bool forwardCamera
@@ -169,50 +168,57 @@ namespace Welol {
             moveForward(0.05f);
         static float PI = 3.141592653589793;
         
-        glm::vec3 pivot(0.0f, 0.0f, 0.0f);
-        glm::mat4 arcRotationMatrix = glm::mat4(1.0f);
-        glm::vec3 rotationAxis(0.0f, 1.0f, 0.0f);
 
-        float deltaAngle = PI / 800.0f;
+        float deltaAngle = PI / 600.0f;
         
         float deltaAngleX = (mouseX - lastMousePos.x) * deltaAngle;
         float deltaAngleY = (mouseY - lastMousePos.y) * deltaAngle;
 
 
 
-        glm::mat4x4 rotMat(1.0f);
-        glm::vec3 rotAxis = -glm::transpose(viewMatrix)[0];
-        rotMat = glm::rotate(rotMat, deltaAngleY, rotAxis);
+        if (rotateCamera)
+        {
+            glm::mat4x4 rotMat(1.0f);
+            glm::vec3 rotAxis = -glm::transpose(viewMatrix)[0];
+            rotMat = glm::rotate(rotMat, deltaAngleY, rotAxis);
+    
+            rotAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+            rotMat = glm::rotate(rotMat, -deltaAngleX, rotAxis);
 
-        rotAxis = glm::vec3(0.0f, 1.0f, 0.0f);
-        rotMat = glm::rotate(rotMat, -deltaAngleX, rotAxis);
-        position = glm::vec3(rotMat * glm::vec4((position - focusTarget), 1.0f)) + focusTarget;
+            glm::vec3 diff = position - focusTarget;
+            glm::vec4 pos = rotMat * glm::vec4(diff.x, diff.y, diff.z, 1.0f) + glm::vec4(focusTarget.x, focusTarget.y, focusTarget.z, 1.0f);    
+            position.x = pos.x;
+            position.y = pos.y;
+            position.z = pos.z;
+    
+        }
 
-
-        glm::vec3 cameraForward = glm::vec3(glm::transpose(viewMatrix)[2]);
-        glm::vec3 cameraUp = glm::vec3(glm::transpose(viewMatrix)[1]);
+        // glm::vec3 cameraForward = glm::vec3(glm::transpose(viewMatrix)[2]);
+        // glm::vec3 cameraUp = glm::vec3(glm::transpose(viewMatrix)[1]);
         glm::vec3 tempUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-        /*float eps = 0.1f;
+        // float eps = 0.1f;
 
-        if(fabs(cameraForward.x) < eps && fabs(cameraForward.z) < eps)
-        {
-            if (cameraUp.y > 0.0f)
-            {
-                std::cout << "facing down" << std::endl;
-                tempUp = glm::vec3(0.0f, 0.0f, 1.0f);
-            }
-            else
-            { 
-                std::cout << "facing up" << std::endl;
-                tempUp = glm::vec3(0.0f, 0.0f, -1.0f);
-            }
-        } 
-        else
-        {
-            tempUp = glm::vec3(0.0f, 1.0f, 0.0f);
-        }
-        */
+        // if(fabs(cameraForward.x) < eps && fabs(cameraForward.z) < eps)
+        // {
+        //     if (cameraUp.y > 0.0f)
+        //     {
+        //         std::cout << "facing down" << std::endl;
+        //         tempUp = glm::vec3(0.0f, 0.0f, 1.0f);
+        //     }
+        //     else
+        //     { 
+        //         std::cout << "facing up" << std::endl;
+        //         tempUp = glm::vec3(0.0f, 0.0f, -1.0f);
+        //     }
+        // } 
+        // else
+        // {
+        //     tempUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        // }
+        
+
+        // position.y = 0.0f;
         viewMatrix = glm::lookAt(position, focusTarget, tempUp);
 
 

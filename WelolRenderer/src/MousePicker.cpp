@@ -7,11 +7,7 @@ bool MousePicker::testRayIntersection(Ray& ray, Entity& entity)
     // Create the AABB
     AABB aabb;
 
-    aabb.center = glm::vec3(
-        0.0f,
-        -1.0149f,
-        0.0f
-    );
+    aabb.center = entity.getPosition();
     aabb.xDir = glm::vec3(entity.getLocalMatrix()[0].x, entity.getLocalMatrix()[0].y, entity.getLocalMatrix()[0].z);
     aabb.yDir = glm::vec3(entity.getLocalMatrix()[1].x, entity.getLocalMatrix()[1].y, entity.getLocalMatrix()[1].z);
     aabb.zDir = glm::vec3(entity.getLocalMatrix()[2].x, entity.getLocalMatrix()[2].y, entity.getLocalMatrix()[2].z);
@@ -19,6 +15,14 @@ bool MousePicker::testRayIntersection(Ray& ray, Entity& entity)
     aabb.halfLengths = glm::vec3(
         1.0149f,1.0149f,1.0149f
     );
+
+    float aabb_min[3] = {
+        -1.0149f,0,-1.0149f
+    };
+
+    float aabb_max[3] = {
+        1.0149f,1.0149f,1.0149f
+    };
 
 
     float tmin = -99999.0f;
@@ -35,6 +39,7 @@ bool MousePicker::testRayIntersection(Ray& ray, Entity& entity)
     float t1 = 0.0f;
     float t2 = 0.0f;
 
+
     for (int i = 0; i < 3; i++)
     {
         float dotRB = glm::dot(aabbDirections[i], rayOriginToAABBCenter);
@@ -44,8 +49,8 @@ bool MousePicker::testRayIntersection(Ray& ray, Entity& entity)
         // aabb side directions.
         if (abs(dotDir) > eps)
         {
-            t1 = (dotRB + aabb.halfLengths.x) / dotDir;
-            t2 = (dotRB - aabb.halfLengths.x) / dotDir;
+            t1 = (dotRB + aabb.halfLengths[i]) / dotDir;
+            t2 = (dotRB - aabb.halfLengths[i]) / dotDir;
 
             // Swap to make sure t1 always holds min and t2 max.
             if (t1 > t2)

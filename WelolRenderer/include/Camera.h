@@ -12,12 +12,11 @@ namespace Welol {
         glm::mat4& getViewMatrix() {return viewMatrix; };
         WelolMath::Mat4x4& wLGetViewMatrix() {return wLViewMatrix;};
         void update(
-            float forwardDirection, 
-            float cameraRotYaw, 
-            float cameraRotPitch,
+            float forwardRate,
+            bool rotateCamera,
             float mouseX,
             float mouseY,
-            bool rotFlag
+            bool forwardCamera
         );
 
         void setLastMousePos(float lastX, float lastY)
@@ -25,6 +24,8 @@ namespace Welol {
             lastMousePos.x = lastX;
             lastMousePos.y = lastY;
         }
+
+        void setTarget(glm::vec3& target) {focusTarget = target;}
 
         glm::vec3& getPosition() {return position; };
         

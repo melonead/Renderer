@@ -2,9 +2,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-Entity::Entity(glm::vec3 position)
+Entity::Entity(glm::vec3 pos)
 {
-    localMatrix = glm::translate(localMatrix, position);
+    localMatrix = glm::translate(localMatrix, pos);
+    position = pos;
 }
 
 void Entity::update(Welol::Camera& camera, glm::mat4& projectionMatrix, Welol::Renderer& renderer)

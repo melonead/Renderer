@@ -38,6 +38,7 @@ Shader::Shader(const std::string& c_path)
 Shader::~Shader()
 {
     glDeleteProgram(shaderID);
+    std::cout << "destroyed " << shaderID << std::endl;
 }
 
 std::string getFullPath(std::string& fileName)

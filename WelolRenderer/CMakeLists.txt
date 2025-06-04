@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 4.0) 
 set(CMAKE_CXX_STANDARD_REQUIED ON)
 set(CMAKE_CXX_STANDARD 20)
 
@@ -27,7 +27,7 @@ target_include_directories(mImGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/Thi
 add_executable(
     RendererDemo 
 
-    src/Demos/FirstDemo/Demo.cpp 
+    FirstDemo/Demo.cpp 
     src/glad.c 
     src/Renderer.cpp 
     src/shader.cpp 
@@ -48,7 +48,7 @@ target_link_libraries(RendererDemo PUBLIC ${GLFW3})
 add_executable(
     SkyBoxDemo 
 
-    src/Demos/SkyBox/SkyBox.cpp 
+    SkyBox/SkyBox.cpp 
     src/glad.c 
     src/Renderer.cpp 
     src/shader.cpp 
@@ -70,7 +70,7 @@ target_link_libraries(SkyBoxDemo PUBLIC ${GLFW3})
 add_subdirectory(FluidSim)
 
 # Lighting
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/Demos/Lighting)
+add_subdirectory(LightingDemo)
 
 find_library(ft freetype PATHS "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\lib")
 target_include_directories(RendererDemo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
