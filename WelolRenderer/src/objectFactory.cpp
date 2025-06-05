@@ -13,18 +13,21 @@ ObjectFactory::ObjectFactory(std::string& bluePrintPath)
 
 void ObjectFactory::createRenderObject(std::string&path)
 {
-    factoryScanner.scan(path);
+	std::vector<Token> tokens = factoryScanner.scan(path);
+	factoryParser = Parser{tokens};
+	factoryParser.parse();
+
 }
 
 
-bool Scanner::scan(std::string& path)
+std::vector<Token> Scanner::scan(std::string& path)
 { 
     std::cout << "scanning file" << std::endl;
     std::ifstream file_stream{path};
     if (file_stream.fail())
     {
 	    std::cout << "failed to the open file" << std::endl;
-	    return false;
+		throw;
     }
 
     std::stringstream sourceStream;
@@ -67,6 +70,10 @@ bool Scanner::scan(std::string& path)
 		    {
 			    addNumberToken();
 		    }
+		    else if (isAlpha(c))
+		    {
+			    addIdentifierToken();
+		    }
 		    else
 		    {
 			    std::cerr << "Unexpected character has been encountered: "  << c << std::endl;
@@ -79,17 +86,17 @@ bool Scanner::scan(std::string& path)
 	size = 0;
     }
     
-    return true;
+    return Tokens;
 } 
 
-void Scanner::addToken(TokenType type, std::string& value)
+void Scanner::addToken(W_TokenType type, std::string& value)
 {
 	Token t{type, value};
 	Tokens.push_back(t);
 	std::cout << value << std::endl;
 }
 
-void Scanner::addToken(TokenType type)
+void Scanner::addToken(W_TokenType type)
 {
 	std::string empty = "";
 	addToken(type, empty);
@@ -120,7 +127,7 @@ void Scanner::addStringToken()
 
 	// advance for the closing "
 	advance();
-	std::string value = source.substr(position, size);
+	std::string value = source.substr(position + 1, size - 2);
 	addToken(STRING, value);
 }
 
@@ -163,6 +170,84 @@ bool Scanner::isNumeric(char c)
 	return c >= '0' && c <= '9';
 }
 
+bool Scanner::isAlpha(char c)
+{
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_');
+}
+
+bool Scanner::isAlphaNumeric(char c)
+{
+	return isAlpha(c) || isNumeric(c);
+}
+
+
+void Scanner::addIdentifierToken()
+{
+	while(isAlphaNumeric(lookAhead()) && !isAtEndOfFile())
+	{
+		advance();
+	}
+	
+	std::string value = source.substr(position, size);
+
+	addToken(IDENTIFIER, value);
+}
+
+Parser::Parser(std::vector<Token> tokens)
+	:Tokens{std::move(tokens)} 
+{
+}	
+
+void Parser::parse(Scope& globalScope)
+{
+	std::cout << "parsing the tokens" << std::endl;
+	while (peek().type != END_OF_FILE)
+	{
+		if (peek().type == EQUAL)
+		{
+			std::cout << previous().value << " = " << lookOneAhead() << std::endl;
+		}
+
+		advance();
+	}
+}
+
+
+Scope* Parser::getParentScope(Scope& scope)
+{
+	//
+	return ObjectFactory::globalScope.scopeIsEmpty() &ObjectFactory::globalScope : &ObjectFactory::globalScope.getLastItemPtr(); 
+}
+
+
+Scope::Scope(Scope* parent)
+	: par(parent)
+{
+	//
+}
+
+Token Parser::advance()
+{
+	//if (!isAtEndToken()) current++;
+	current++;
+	return Tokens.at(current);
+}
+
+Token Parser::previous()
+{
+	return Tokens.at(current - 1);
+}
+
+Token Parser::peek()
+{
+	return Tokens.at(current);
+}
+
+Token Parser::lookOneAhead()
+{
+	return Tokens.at(current + 1);
+}
+
 void ObjectFactory::createShaderFilesTemplate(std::string& objectName, ObjectBluePrint& bp)
 {
     std::string vPath = bp.shaderPath + '\\' + objectName + "Vertex.glsl";
@@ -173,6 +258,7 @@ void ObjectFactory::createShaderFilesTemplate(std::string& objectName, ObjectBlu
         std::ofstream vFile(vPath);
         if (vFile.fail())
             std::cerr << "Failed to open file: " << vPath << std::endl;
+	
         vFile << "#version 430 core\n";
         vFile << "layout (location=0) in vec3 position;\n";
         vFile << "layout (location=1) in vec2 texCoord;\n";
