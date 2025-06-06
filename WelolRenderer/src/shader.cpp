@@ -43,7 +43,7 @@ Shader::~Shader()
 
 std::string getFullPath(std::string& fileName)
 {
-    std::string absolutePath = "C:/Users/brian/programming_projects/WelolRenderer/WelolRenderer/src/Demos/Lighting/shaders";
+    std::string absolutePath = "C:\\Users\\brian\\programming_projects\\WelolRenderer\\WelolRenderer\\LightingDemo\\shaders";
     absolutePath += '/';
     absolutePath.append(fileName);
     return absolutePath;

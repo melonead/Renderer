@@ -9,7 +9,8 @@
 struct ObjectBluePrint
 {
     std::string name;
-    std::string shaderPath;
+    std::string vertexShaderPath = "this is an error";
+    std::string fragmentShaderPath;
     std::string diffuseTexturePath;
     std::string meshPath;
 };
@@ -17,9 +18,9 @@ struct ObjectBluePrint
 struct ObjectRenderInfo
 {
 
-    ObjectRenderInfo();
+    ObjectRenderInfo() = default;
     ~ObjectRenderInfo();
-    Welol::RenderOperation rop;
+    Welol::RenderOperation* rop = nullptr;
     Welol::Texture* diffuse = nullptr;
     Shader* shader = nullptr;
 
@@ -39,14 +40,19 @@ enum W_TokenType : int
 	IDENTIFIER,
 	STRING,
 	FRAGMENT_SHADER_PATH,
-	NUMBER
+	NUMBER,
+	END_OF_FILE
 };
 
 
 struct Token
 {
 	W_TokenType type;
-	std::string value;
+	std::string lexeme;
+    // REVISIT: for now I'm assuming that every literal value will be
+    // a string. However, that is obviously going to change in order to 
+    // hold other values. Be sure to change this when that time arises.
+    // std::string literal;
 };
 
 class Scanner
@@ -76,7 +82,7 @@ private:
     std::size_t size{0};
 
     std::vector<Token> scan(std::string& path);
-    void addToken(W_TokenType type, std::string& value);
+    void addToken(W_TokenType type, std::string& literal);
     char advance();
     bool isAtEndOfFile();
     void addStringToken();
@@ -88,14 +94,17 @@ private:
     bool isAlpha(char c);
     bool isAlphaNumeric(char c);
     void addIdentifierToken();
+    W_TokenType getIdentifierTokenType(Token& token);
+	    
 };
 
 
 class Scope
 {
 public:
+    Scope() = default;
     Scope(Scope* parent);
-    ~Scope();
+    
 private:
     std::map<std::string, std::string> scopeMap;
     Scope* par;
@@ -104,11 +113,8 @@ private:
     std::string fShaderPath;
     std::string meshPath;
     std::string diffuseTexPath;
-    bool scopeIsEmpty() {return scopeMap.size() > 0 false : true;}
-    Scope* getLastItemPtr()
-    {
-	    return &scopeMap[scopeMap.size()];
-    }
+    bool scopeIsEmpty();
+    Scope* getLastItemPtr();
 };
 
 
@@ -117,7 +123,7 @@ class Parser
 public:
     Parser() = default;
     Parser(std::vector<Token> tokens);
-    void parse(Scope& globalScope);
+    void parse(Scope& globalScope, std::map<std::string, ObjectBluePrint>&  bluePrintsMap);
 private:
      std::vector<Token> Tokens;
      Scope* globalScopePtr;
@@ -127,7 +133,9 @@ private:
      Token advance();
      Token previous();
      Token lookOneAhead();
+     Token lookTwoAhead();
      Token peek();
+     bool isAtEnd();
 
 };
 
@@ -135,14 +143,16 @@ private:
 class ObjectFactory
 {
 public:
-    ObjectFactory(std::string& bluePrintPath);
-    void createRenderObject(std::string& path);
+    ObjectFactory(std::string& path);
+    ObjectRenderInfo createRenderObject(std::string& name, Welol::Renderer& renderer);
 private:
     friend Parser;
     std::string bpPath;
     Scanner factoryScanner{};
     Parser factoryParser{};
-    static Scope globalScope;
+    Scope globalScope{};
+    std::map<std::string, ObjectBluePrint> objectBluePrintsMap;
+   
 
     void createShaderFilesTemplate(std::string& objectName, ObjectBluePrint& bp);
 };

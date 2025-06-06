@@ -5,24 +5,66 @@
 #include <map>
 
 
-ObjectFactory::ObjectFactory(std::string& bluePrintPath)
-    : bpPath(bluePrintPath)
-{
-
-}
-
-void ObjectFactory::createRenderObject(std::string&path)
+ObjectFactory::ObjectFactory(std::string& path)
+    : bpPath(path)
 {
 	std::vector<Token> tokens = factoryScanner.scan(path);
 	factoryParser = Parser{tokens};
-	factoryParser.parse();
+	factoryParser.parse(globalScope, objectBluePrintsMap);
+}
 
+ObjectRenderInfo ObjectFactory::createRenderObject(std::string& name, Welol::Renderer& renderer)
+{
+	ObjectRenderInfo ori;
+
+	Model_Loader modelLoader;
+
+	modelLoader.load_model(objectBluePrintsMap[name].meshPath);
+	
+	std::vector<float> vertexPositions = modelLoader.getPositions();
+	std::vector<float> texCoords = modelLoader.getTexCoords();
+	std::vector<unsigned int> indices = modelLoader.get_indices();
+	unsigned int vertexCount = indices.size();
+		
+	ori.rop = new Welol::RenderOperation{Welol::WL_TRIANGLES, vertexCount, 0, 0, false, true};
+	ori.rop->addVertexIndices(indices);
+
+	Welol::VertexAttribute position{0, Welol::WL_FLOAT3, vertexPositions.data(), vertexCount, false};
+
+
+	Welol::VertexAttribute texCoord{1, Welol::WL_FLOAT2, texCoords.data(), vertexCount, false};
+	
+	ori.rop->addVertexAttribute(position);
+	ori.rop->addVertexAttribute(texCoord);
+
+	ori.rop->setVerticesToRender(vertexCount);
+	renderer.initializeRenderOperation(*(ori.rop));
+	
+	std::string texName = "diffuse";
+	ori.diffuse = new Welol::Texture{Welol::WL_TEX_2D, 
+		objectBluePrintsMap[name].diffuseTexturePath,
+		0,
+		texName,
+		0
+	};
+
+	ori.diffuse->attachImageData(objectBluePrintsMap[name].diffuseTexturePath);
+
+	createShaderFilesTemplate(name, objectBluePrintsMap[name]);
+
+	ori.shader = new Shader{
+		objectBluePrintsMap[name].vertexShaderPath,
+		objectBluePrintsMap[name].fragmentShaderPath
+	};
+
+
+
+	return ori;
 }
 
 
 std::vector<Token> Scanner::scan(std::string& path)
 { 
-    std::cout << "scanning file" << std::endl;
     std::ifstream file_stream{path};
     if (file_stream.fail())
     {
@@ -85,15 +127,18 @@ std::vector<Token> Scanner::scan(std::string& path)
 	position += size;
 	size = 0;
     }
+    addToken(END_OF_FILE);
     
     return Tokens;
 } 
 
-void Scanner::addToken(W_TokenType type, std::string& value)
+void Scanner::addToken(W_TokenType type, std::string& literal)
 {
-	Token t{type, value};
+	Token t{type, literal};
+	if (type == IDENTIFIER)
+		t.type = getIdentifierTokenType(t);
+
 	Tokens.push_back(t);
-	std::cout << value << std::endl;
 }
 
 void Scanner::addToken(W_TokenType type)
@@ -127,8 +172,8 @@ void Scanner::addStringToken()
 
 	// advance for the closing "
 	advance();
-	std::string value = source.substr(position + 1, size - 2);
-	addToken(STRING, value);
+	std::string literal = source.substr(position + 1, size - 2);
+	addToken(STRING, literal);
 }
 
 void Scanner::addNumberToken()
@@ -150,8 +195,8 @@ void Scanner::addNumberToken()
 		}	
 	}
 	
-	std::string value = source.substr(position, size);
-	addToken(NUMBER, value);
+	std::string literal = source.substr(position, size);
+	addToken(NUMBER, literal);
 }
 
 char Scanner::lookAhead()
@@ -188,35 +233,76 @@ void Scanner::addIdentifierToken()
 		advance();
 	}
 	
-	std::string value = source.substr(position, size);
+	std::string literal = source.substr(position, size);
 
-	addToken(IDENTIFIER, value);
+	addToken(IDENTIFIER, literal);
 }
+
+W_TokenType Scanner::getIdentifierTokenType(Token& token)
+{
+	if (reservedWords.contains(token.lexeme))
+		return reservedWords[token.lexeme];
+
+	return token.type;
+}
+
 
 Parser::Parser(std::vector<Token> tokens)
 	:Tokens{std::move(tokens)} 
 {
 }	
 
-void Parser::parse(Scope& globalScope)
+void Parser::parse(Scope& globalScope, std::map<std::string, ObjectBluePrint>& bluePrintsMap)
 {
-	std::cout << "parsing the tokens" << std::endl;
+	// predefine it here to appease the compiler and override it latter
+	ObjectBluePrint bp;
 	while (peek().type != END_OF_FILE)
 	{
+		
+		if (peek().type == RIGHT_BRACE)
+		{
+			ObjectBluePrint objBp = bp;
+			bluePrintsMap[bp.name] = objBp;
+		}
+
 		if (peek().type == EQUAL)
 		{
-			std::cout << previous().value << " = " << lookOneAhead() << std::endl;
+			switch (previous().type)
+			{
+				case OBJECT_NAME:
+				{
+					bp.name = lookOneAhead().lexeme;
+					break;
+						
+				}
+				case VERTEX_SHADER_PATH:
+				{
+					bp.vertexShaderPath = lookOneAhead().lexeme;
+					break;
+				}
+				case FRAGMENT_SHADER_PATH:
+				{
+					bp.fragmentShaderPath = lookOneAhead().lexeme;
+					break;
+				}
+				case DIFFUSE_TEXTURE_PATH:
+				{
+					bp.diffuseTexturePath = lookOneAhead().lexeme;
+					break;
+				}
+				case MESH_PATH:
+				{
+					bp.meshPath = lookOneAhead().lexeme;
+					break;
+				}
+				
+				default: break;
+
+			}
 		}
 
 		advance();
 	}
-}
-
-
-Scope* Parser::getParentScope(Scope& scope)
-{
-	//
-	return ObjectFactory::globalScope.scopeIsEmpty() &ObjectFactory::globalScope : &ObjectFactory::globalScope.getLastItemPtr(); 
 }
 
 
@@ -228,8 +314,7 @@ Scope::Scope(Scope* parent)
 
 Token Parser::advance()
 {
-	//if (!isAtEndToken()) current++;
-	current++;
+	if (!isAtEnd()) current++;
 	return Tokens.at(current);
 }
 
@@ -248,16 +333,24 @@ Token Parser::lookOneAhead()
 	return Tokens.at(current + 1);
 }
 
+bool Parser::isAtEnd()
+{
+	return (peek().type == END_OF_FILE);
+}
+
+Token Parser::lookTwoAhead()
+{
+	return Tokens.at(current + 2);
+}
+
 void ObjectFactory::createShaderFilesTemplate(std::string& objectName, ObjectBluePrint& bp)
 {
-    std::string vPath = bp.shaderPath + '\\' + objectName + "Vertex.glsl";
-    std::string fPath = bp.shaderPath + '\\' + objectName + "Fragment.glsl";
 
-    if (!std::filesystem::exists(vPath))
+    if (!std::filesystem::exists(bp.vertexShaderPath))
     {
-        std::ofstream vFile(vPath);
+        std::ofstream vFile(bp.vertexShaderPath);
         if (vFile.fail())
-            std::cerr << "Failed to open file: " << vPath << std::endl;
+            std::cerr << "Failed to open file: " << bp.vertexShaderPath << std::endl;
 	
         vFile << "#version 430 core\n";
         vFile << "layout (location=0) in vec3 position;\n";
@@ -273,11 +366,11 @@ void ObjectFactory::createShaderFilesTemplate(std::string& objectName, ObjectBlu
         vFile << "}\n";
     }
 
-    if (!std::filesystem::exists(fPath))
+    if (!std::filesystem::exists(bp.fragmentShaderPath))
     {
-        std::ofstream fFile(fPath);
+        std::ofstream fFile(bp.fragmentShaderPath);
         if (fFile.fail())
-            std::cerr << "Failed to open file: " << vPath << std::endl;
+            std::cerr << "Failed to open file: " << bp.fragmentShaderPath << std::endl;
         
         fFile << "#version 430 core\n";
         fFile << "out vec4 color;\n";
@@ -299,19 +392,16 @@ void ObjectRenderInfo::update(Welol::Renderer& renderer, Welol::Camera& camera, 
     if (!(diffuse == nullptr))
         diffuse->update(*shader);
 
-    renderer.render(rop);
+    renderer.render(*rop);
 }
 
 
 //--------------------- object render info --------------------------
 
-ObjectRenderInfo::ObjectRenderInfo()
-{
-    
-}
 
 ObjectRenderInfo::~ObjectRenderInfo()
 {
     delete shader;
     delete diffuse;
+    delete rop;
 }
