@@ -144,7 +144,7 @@ class ObjectFactory
 {
 public:
     ObjectFactory(std::string& path);
-    ObjectRenderInfo createRenderObject(std::string& name, Welol::Renderer& renderer);
+    ObjectRenderInfo* createRenderObject(std::string& name, Welol::Renderer& renderer);
 private:
     friend Parser;
     std::string bpPath;

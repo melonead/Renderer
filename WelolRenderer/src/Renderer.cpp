@@ -14,27 +14,25 @@ namespace Welol {
 			- indexed
 				- using indices to save on the number of vertex data (e.g position) that need to be sent to the gpu
 	*/
+	
 
-	RenderOperation::RenderOperation(PrimitiveType shapeType, unsigned int numVertices,
+	RenderOperation::RenderOperation(PrimitiveType shapeType, unsigned int numVerticesToRender,
 		unsigned int offset, unsigned int numberOfInstances, bool instanced, bool ind)
-		: primitiveShapeType(shapeType),
-		  numberOfVertices(numVertices),
+		 :  
+		  
+		  primitiveShapeType(shapeType),
+		  verticesToRender(numVerticesToRender),
 		  vBufferOffset(offset),
 		  numberOfInstances(numberOfInstances),
-		  
 		  isInstanced(instanced),
 		  isIndexed(ind)
+		  
 	{
 	}
 
 	PrimitiveType RenderOperation::getPrimitiveShapeType()
 	{
 		return primitiveShapeType;
-	}
-
-	unsigned int RenderOperation::getVertexCount()
-	{
-		return numberOfVertices;
 	}
 
 	unsigned int RenderOperation::getOffset()
@@ -94,18 +92,19 @@ namespace Welol {
 	*
 	*/
 
-	VertexAttribute::VertexAttribute()
-	{
-
-	}
-
-	VertexAttribute::VertexAttribute(unsigned int index, VertexDataType type, void* data_ptr, unsigned int verticesCount, bool instanced)
+	VertexAttribute::VertexAttribute(
+		unsigned int index, 
+		VertexDataType type, 
+		void* data_ptr, 
+		unsigned int verticesCountInBuffer,			
+		bool instanced
+	)
 		: bindingIndex(index),
 		typeOfData(type),
 		dataPtr(data_ptr),
-		numberOfVertices(verticesCount),
 		isInstanced(instanced),
-		sizeOfDataInBytes(getSizeOfDataType(type) * verticesCount)
+		bufferSize(getSizeOfDataType(type) * verticesCountInBuffer)
+
 	{
 	}
 
@@ -242,8 +241,7 @@ namespace Welol {
 			va.setBufferID(vbo);
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
 			// REVISIT: Test for when bad things happen here
-			float sizeInBytes = getSizeOfDataType(va.getTypeOfData()) * va.getVertexCount();
-			glBufferData(GL_ARRAY_BUFFER, sizeInBytes, va.getDataPtr(), GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, va.getSizeOfBuffer(), va.getDataPtr(), GL_STATIC_DRAW);
 
 		
 			glVertexAttribPointer(va.getIndex(), getTypeCount(va.getTypeOfData()), getGlDataType(va.getTypeOfData()), GL_FALSE, 0, nullptr);
@@ -282,14 +280,14 @@ namespace Welol {
 	{
 		VertexAttribute& va = renderOperation.getAttribute(index);
 		glBindBuffer(GL_ARRAY_BUFFER, va.getBufferID());
-		float sizeInBytes = getSizeOfDataType(va.getTypeOfData()) * va.getVertexCount();
-		glBufferSubData(GL_ARRAY_BUFFER, offset, sizeInBytes, data);
+		//float sizeInBytes = getSizeOfDataType(va.getTypeOfData()) * va.getVertexCount();
+		glBufferSubData(GL_ARRAY_BUFFER, offset, va.getSizeOfBuffer(), data);
 	}
 
 	void Renderer::addSizeBytesToBuffer(RenderOperation& renderOperation, unsigned int index, unsigned int offset, unsigned int size, void* data)
 	{
 		VertexAttribute& va = renderOperation.getAttribute(index);
-		assert(size <= va.getSizeOfData() && "The number of bytes to be written is larger than the size of the buffer.");
+		assert(size <= va.getSizeOfBuffer() && "The number of bytes to be written is larger than the size of the buffer.");
 		glBindBuffer(GL_ARRAY_BUFFER, va.getBufferID());
 		glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
 	}

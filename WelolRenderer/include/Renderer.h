@@ -88,39 +88,61 @@ namespace Welol {
 	class VertexAttribute
 	{
 	public:
-		VertexAttribute();
-		VertexAttribute(unsigned int index, VertexDataType type, void* data_ptr, unsigned int verticesCount, bool instanced);
+		VertexAttribute() = default;
+
+		/*
+			verticeCount - the number of vertices for this particular attribute NOT the number of vertices
+			to be rendered.
+		*/
+		VertexAttribute(
+			unsigned int index, 
+			VertexDataType type, 
+			void* data_ptr, 
+			unsigned int verticesCountInBuffer,			
+			bool instanced
+		);
+	
 		unsigned int getIndex();
 		VertexDataType getTypeOfData();
 		void* getDataPtr() { return dataPtr; };
-		unsigned int getVertexCount() { return numberOfVertices; };
+		/*unsigned int getVertexCount() { return numberOfVertices; };*/
 		bool getIsInstanced();
-		unsigned int getSizeOfData() {return sizeOfDataInBytes; }
+		unsigned int getSizeOfBuffer() {return bufferSize; }
 		unsigned int& getBufferID() {return bufferID;}
 		void setBufferID(unsigned int id) { bufferID = id;}
 	private:
 		unsigned int bindingIndex;
 		VertexDataType typeOfData;
 		void* dataPtr;
-		unsigned int numberOfVertices;
 		bool isInstanced;
-		unsigned int sizeOfDataInBytes;
+		unsigned int bufferSize;
 		unsigned int bufferID;
 	};
 
-	typedef std::vector<unsigned int> VertexIndices;
 
 	class RenderOperation
 	{
 	public:
 
+		typedef std::vector<unsigned int> VertexIndices;
 		typedef std::map<unsigned int, VertexAttribute> RenderOperationAttributes;
-		RenderOperation(PrimitiveType shapeType, unsigned int numVertices,
-			unsigned int offset, unsigned int numberOfInstances, bool instanced, bool ind);
+
+		/*
+			numVerticesToRender - The number of indices that determine how many triangles we render.
+		*/
+
+
+		RenderOperation(
+			PrimitiveType shapeType,  
+			unsigned int numVerticesToRender, 
+			unsigned int offset, 
+			unsigned int numberOfInstances, 
+			bool instanced, 
+			bool ind
+		);
 		RenderOperation() = default;
 
 		PrimitiveType getPrimitiveShapeType();
-		unsigned int getVertexCount();
 		unsigned int getOffset();
 		unsigned int getInstanceCount();
 		bool getIsInstanced();
@@ -165,18 +187,18 @@ namespace Welol {
 		RenderOperationAttributes attributes;
 		VertexIndices indices;
 		PrimitiveType primitiveShapeType;
-		unsigned int numberOfVertices;
+		unsigned int verticesToRender;
 		unsigned int vBufferOffset;
 		unsigned int numberOfInstances;
 		bool isInstanced;
 		bool initialized{ false };
 		unsigned int operationID{ 0 };
 		bool isIndexed;
-		unsigned int verticesToRender;
 	};
 
 	/*
-		This is the class that all the OpenGl calls are called.
+		This is the class that all the OpenGl calls are called. Localize the GL call to this class so that
+		the other classes can be used by other graphics apis.
 	*/
 
 
