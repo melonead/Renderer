@@ -239,23 +239,47 @@ namespace Welol {
 			unsigned int vbo;
 			glGenBuffers(1, &vbo);
 			va.setBufferID(vbo);
+
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
 			// REVISIT: Test for when bad things happen here
 			glBufferData(GL_ARRAY_BUFFER, va.getSizeOfBuffer(), va.getDataPtr(), GL_STATIC_DRAW);
 
-		
-			glVertexAttribPointer(va.getIndex(), getTypeCount(va.getTypeOfData()), getGlDataType(va.getTypeOfData()), GL_FALSE, 0, nullptr);
-
-			// REVISIT: Add instance rate to vertex attribute, for now we assume instanced attributes are
-			// going to be repeated at every vertex shader program run on the GPU.
-			// glVertexAttribDivisor(va.getIndex(), instanceRate);
-			if (va.getIsInstanced())
+			switch (va.getTypeOfData())
 			{
-				glVertexAttribDivisor(va.getIndex(), 1);
-			}
+			case WL_MAT4:
+			{
+				for (int i = 0; i < 4; i++)
+				{
 
-			glEnableVertexAttribArray(va.getIndex());
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
+					glVertexAttribPointer(va.getIndex() + i, 4,
+						getGlDataType(va.getTypeOfData()), GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(float) * i * 4));
+					if (va.getIsInstanced())
+					{
+						glVertexAttribDivisor(va.getIndex() + i, 1);
+					}
+					glEnableVertexAttribArray(va.getIndex() + i);
+					//glBindBuffer(GL_ARRAY_BUFFER, 0);
+				}
+				
+			}
+			default:
+			{
+
+				glVertexAttribPointer(va.getIndex(), getTypeCount(va.getTypeOfData()), getGlDataType(va.getTypeOfData()), GL_FALSE, 0, nullptr);
+
+				// REVISIT: Add instance rate to vertex attribute, for now we assume instanced attributes are
+				// going to be repeated at every vertex shader program run on the GPU.
+				// glVertexAttribDivisor(va.getIndex(), instanceRate);
+				if (va.getIsInstanced())
+				{
+					glVertexAttribDivisor(va.getIndex(), 1);
+				}
+
+				glEnableVertexAttribArray(va.getIndex());
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+			}
+			}
+			
 
 		}
 

@@ -22,7 +22,8 @@ namespace Welol {
 		WL_FLOAT = 0,
 		WL_FLOAT2 = 1, 
 		WL_FLOAT3 = 2,
-		WL_FLOAT4 = 3
+		WL_FLOAT4 = 3,
+		WL_MAT4 = 4
 	};
 
 	// REVISIT: can a lone function compile without the static keyword?
@@ -35,6 +36,7 @@ namespace Welol {
 		case WL_FLOAT2:
 		case WL_FLOAT3:
 		case WL_FLOAT4:
+		case WL_MAT4:
 			return GL_FLOAT;
 		default:
 			return 0;
@@ -53,6 +55,8 @@ namespace Welol {
 			return sizeof(float) * 3;
 		case WL_FLOAT4:
 			return sizeof(float) * 4;
+		case WL_MAT4:
+			return sizeof(float) * 16;
 		default:
 			return 0;
 		}
@@ -70,6 +74,8 @@ namespace Welol {
 			return 3;
 		case WL_FLOAT4:
 			return 4;
+		case WL_MAT4:
+			return 16;
 		default:
 			return 0;
 		}
