@@ -13,15 +13,19 @@ bool MousePicker::testRayIntersection(Ray& ray, Entity& entity)
     aabb.zDir = glm::vec3(entity.getLocalMatrix()[2].x, entity.getLocalMatrix()[2].y, entity.getLocalMatrix()[2].z);
 
     aabb.halfLengths = glm::vec3(
-        1.0149f,1.0149f,1.0149f
+       (entity.renderInfo->max.x - entity.renderInfo->min.x) * 0.5f,
+
+       (entity.renderInfo->max.y - entity.renderInfo->min.y) * 0.5f,
+       
+       (entity.renderInfo->max.z - entity.renderInfo->min.z) * 0.5f
     );
 
     float aabb_min[3] = {
-        -1.0149f,0,-1.0149f
+        entity.renderInfo->min.x, entity.renderInfo->min.y, entity.renderInfo->min.z
     };
 
     float aabb_max[3] = {
-        1.0149f,1.0149f,1.0149f
+        entity.renderInfo->max.x, entity.renderInfo->max.y, entity.renderInfo->max.z
     };
 
 

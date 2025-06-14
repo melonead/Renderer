@@ -147,6 +147,16 @@ void Model_Loader::load_model(std::string path) {
         sortedTexCoords[value * 2] = texCoord.x;
         sortedTexCoords[value * 2 + 1] = texCoord.y;
         sortedNormals[value] = unsortedNormals[vertexAttributeIndices[2] - 1];
+
+        // find the minimum and maximum
+        min.x = findMin(pos.x, min.x);
+        min.y = findMin(pos.y, min.y);
+        min.z = findMin(pos.z, min.z);
+
+
+        max.x = findMax(pos.x, max.x);
+        max.y = findMax(pos.y, max.y);
+        max.z = findMax(pos.z, max.z);
     }
 
     

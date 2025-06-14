@@ -162,7 +162,7 @@ public:
 
 public:
     unsigned int maxCircles{50};
-    unsigned int maxLines{50};
+    unsigned int maxLines{500};
     Welol::RenderOperation Circle{Welol::WL_TRIANGLES, 6, 0, maxCircles, true, false};
     Welol::RenderOperation Rectangle{Welol::WL_LINE_LOOP, 4, 0, maxCircles, false, false};
     Welol::RenderOperation Line{Welol::WL_LINES, maxLines , 0, 0, false, false};

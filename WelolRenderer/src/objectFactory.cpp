@@ -58,10 +58,9 @@ ObjectRenderInfo* ObjectFactory::createRenderObject(std::string& name, Welol::Re
             objectBluePrintsMap[name].fragmentShaderPath
     };
 
-    //vertexPositions.clear();
-    //texCoords.clear();
-    //indices.clear();
 
+    ori->min = modelLoader.getMin();
+    ori->max = modelLoader.getMax();
 
 
     return ori;

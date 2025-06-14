@@ -16,4 +16,6 @@ public:
 private:
     glm::mat4 localMatrix{1.0f};
     glm::vec3 position{0.0f, 0.0f, 0.0f};
+    glm::vec3 min{};
+    glm::vec3 max{};
 };

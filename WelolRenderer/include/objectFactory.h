@@ -23,6 +23,8 @@ struct ObjectRenderInfo
     Welol::RenderOperation* rop = nullptr;
     Welol::Texture* diffuse = nullptr;
     Shader* shader = nullptr;
+    glm::vec3 min;
+    glm::vec3 max;
 
     void update(Welol::Renderer& renderer, Welol::Camera& camera, glm::mat4& projectionMatrix, glm::mat4& localMatrix);
 };
