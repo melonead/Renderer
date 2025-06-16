@@ -7,27 +7,7 @@ bool MousePicker::testRayIntersection(Ray& ray, Entity& entity)
     // Create the AABB
     AABB aabb;
 
-    aabb.center = entity.getPosition();
-    aabb.xDir = glm::vec3(entity.getLocalMatrix()[0].x, entity.getLocalMatrix()[0].y, entity.getLocalMatrix()[0].z);
-    aabb.yDir = glm::vec3(entity.getLocalMatrix()[1].x, entity.getLocalMatrix()[1].y, entity.getLocalMatrix()[1].z);
-    aabb.zDir = glm::vec3(entity.getLocalMatrix()[2].x, entity.getLocalMatrix()[2].y, entity.getLocalMatrix()[2].z);
-
-    aabb.halfLengths = glm::vec3(
-       (entity.renderInfo->max.x - entity.renderInfo->min.x) * 0.5f,
-
-       (entity.renderInfo->max.y - entity.renderInfo->min.y) * 0.5f,
-       
-       (entity.renderInfo->max.z - entity.renderInfo->min.z) * 0.5f
-    );
-
-    float aabb_min[3] = {
-        entity.renderInfo->min.x, entity.renderInfo->min.y, entity.renderInfo->min.z
-    };
-
-    float aabb_max[3] = {
-        entity.renderInfo->max.x, entity.renderInfo->max.y, entity.renderInfo->max.z
-    };
-
+    aabb.update(entity);
 
     float tmin = -99999.0f;
     float tmax = 99999.0f;
@@ -42,7 +22,6 @@ bool MousePicker::testRayIntersection(Ray& ray, Entity& entity)
 
     float t1 = 0.0f;
     float t2 = 0.0f;
-
 
     for (int i = 0; i < 3; i++)
     {
