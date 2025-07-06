@@ -1,5 +1,20 @@
 #pragma once
 #include "math.h"
+#include <glm/glm.hpp>
+
+struct Plane
+{
+    glm::vec3 normal;
+    glm::vec3 center;
+    float displacement;
+};
+
+
+struct Ray
+{
+    glm::vec3 origin;
+    glm::vec3 direction;
+};
 
 namespace WelolMath {
 
